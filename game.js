@@ -292,7 +292,7 @@
   rect(38, 7, 42, 7, 'q'); rect(43, 0, 43, 13, 'q'); rect(38, 13, 47, 13, 'q');
   rect(40, 1, 42, 6, 'M');
   rect(44, 1, 47, 4, 'C'); rect(44, 7, 47, 11, 'C');
-  rect(39, 16, 44, 17, 'D'); rect(40, 22, 46, 23, 'C'); rect(40, 25, 46, 27, 'C');
+  rect(40, 16, 45, 17, 'D'); rect(40, 22, 46, 23, 'C'); rect(40, 25, 46, 27, 'C');
   put(46, 12, 'e'); put(16, 4, 'e'); put(11, 23, 'e'); // metro: Beaulieu-Université, Sainte-Anne, Colombier
   put(38, 2, 'T'); put(38, 5, 'T'); put(47, 6, 'T'); put(39, 9, 'T'); put(45, 12, 'T'); put(47, 16, 'T'); put(46, 17, 'T');
   put(44, 5, 'n'); put(41, 12, 'n');
@@ -300,7 +300,7 @@
   rect(1, 21, 6, 22, '#'); rect(15, 21, 18, 22, '#'); rect(1, 26, 7, 27, '#'); rect(24, 21, 33, 22, '#'); rect(24, 26, 33, 27, '#');
   put(10, 27, 'T'); put(16, 26, 'T'); put(17, 27, 'T'); put(3, 23, 'T');
   for (let x = 0; x < MAP_W; x += 3) if (x < 11 || x > 14) if (grid[18][x] === '.') put(x, 18, 'T');
-  put(45, 18, '.'); put(42, 18, 'v'); put(43, 18, 'v'); // bike rack tucked behind the Resto U
+  put(45, 18, '.'); put(39, 18, '.'); put(42, 18, 'v'); put(43, 18, 'v'); // bike rack tucked behind the Diapason, reached from its west side
   // Roads, river, bridges.
   rect(0, 14, 47, 15, '='); rect(20, 0, 21, 27, '='); rect(36, 0, 37, 27, '='); rect(0, 24, 47, 24, '=');
   rect(0, 19, 47, 20, '~');
@@ -373,7 +373,7 @@
     { t: 'Métro Sainte-Anne', x: 16.5 * T, y: 4.4 * T },
     { t: 'Station vide', x: 32 * T, y: 13.4 * T },
     { t: 'Parc du Thabor', x: 29 * T, y: 1.5 * T },
-    { t: 'Le Diapason', x: 41.5 * T, y: 17.1 * T },
+    { t: 'Le Diapason', x: 42.8 * T, y: 17.1 * T },
     { t: 'Fac de sciences éco', x: 3.4 * T, y: 5.5 * T },
     { t: 'Rocade', x: 48.5 * T, y: 13.2 * T },
     { t: 'Rennes 2', x: 54 * T, y: 2.6 * T },
@@ -413,7 +413,7 @@
   const otSpot = { x: 32 * T, y: 13 * T + 10, wasNear: false };
   let solvedCount = 0, hasBike = false, otDone = false;
   const SUPS = [
-    { key: 'loic', name: 'Loïc', x: 45 * T + 8, y: 16 * T + 12, img: LOIC, found: false, wasNear: false },
+    { key: 'loic', name: 'Loïc', x: 39 * T + 8, y: 16 * T + 12, img: LOIC, found: false, wasNear: false },
     { key: 'vero', name: 'Véronique', x: 4 * T + 8, y: 9 * T + 12, img: VERO, found: false, wasNear: false },
     { key: 'ioana', name: 'Ioana', x: 50 * T + 8, y: 14 * T + 14, img: IOANA, found: false, seg: 0, cool: 0, flip: false },
   ];
@@ -1136,7 +1136,7 @@
   function updateCars(dt) {
     const m = 40;
     for (const c of cars) {
-      if (c.horiz) { c.x += c.dir * c.speed * trafficMul * dt; if (c.x > CITY_W * T + m) c.x = -m; if (c.x < -m) c.x = CITY_W * T + m; }
+      if (c.horiz) { c.x += c.dir * c.speed * trafficMul * dt; if (c.x > CITY_W * T + 20) c.x = -m; if (c.x < -m) c.x = CITY_W * T + 20; }
       else { c.y += c.dir * c.speed * trafficMul * dt; if (c.y > world.height + m) c.y = -m; if (c.y < -m) c.y = world.height + m; }
     }
   }
@@ -1473,6 +1473,13 @@
       ctx.drawImage(img, Math.round(pigeon.x - 4 - cx), Math.round(pigeon.y - 6 - cy + bob));
     } });
     ents.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
+    // Tunnel mouths under the rocade: horizontal traffic disappears into them (drawn over the cars).
+    for (const [ty, rows] of [[14, 2], [24, 1]]) {
+      const x0 = CITY_W * T - cx, y0 = ty * T - cy;
+      ctx.fillStyle = '#141218'; ctx.fillRect(x0, y0 - 2, 3 * T, rows * T + 4);
+      ctx.fillStyle = '#7d828b'; ctx.fillRect(x0 - 3, y0 - 5, 3, rows * T + 10); ctx.fillRect(x0 - 3, y0 - 5, 3 * T + 3, 3);
+      ctx.fillStyle = '#5a5f68'; for (let k = 0; k < rows * T + 10; k += 4) ctx.fillRect(x0 - 3, y0 - 5 + k, 3, 1);
+    }
     for (const h of hearts) {
       ctx.globalAlpha = Math.max(0, 1 - h.t / 1.3);
       textShadow(h.txt, h.x - cx, h.y - cy - h.t * 18, '#ff8fb1', 7);
