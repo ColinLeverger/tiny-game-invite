@@ -292,7 +292,7 @@
   rect(38, 7, 42, 7, 'q'); rect(43, 0, 43, 13, 'q'); rect(38, 13, 47, 13, 'q');
   rect(40, 1, 42, 6, 'M');
   rect(44, 1, 47, 4, 'C'); rect(44, 7, 47, 11, 'C');
-  rect(40, 16, 45, 17, 'D'); rect(40, 22, 46, 23, 'C'); rect(40, 25, 46, 27, 'C');
+  rect(41, 16, 46, 17, 'D'); rect(40, 22, 46, 23, 'C'); rect(40, 25, 46, 27, 'C');
   put(46, 12, 'e'); put(16, 4, 'e'); put(11, 23, 'e'); // metro: Beaulieu-Université, Sainte-Anne, Colombier
   put(38, 2, 'T'); put(38, 5, 'T'); put(47, 6, 'T'); put(39, 9, 'T'); put(45, 12, 'T'); put(47, 16, 'T'); put(46, 17, 'T');
   put(44, 5, 'n'); put(41, 12, 'n');
@@ -310,7 +310,8 @@
   rect(51, 1, 57, 5, 'C'); rect(60, 1, 64, 5, 'C');
   rect(50, 8, 58, 11, 'p'); put(55, 9, 'e');
   rect(53, 16, 58, 21, 'C'); rect(62, 17, 67, 21, 'f');
-  rect(50, 14, 70, 14, '='); rect(50, 24, 70, 24, '='); rect(50, 14, 50, 24, '='); rect(70, 14, 70, 24, '=');
+  rect(51, 14, 70, 14, '='); rect(51, 24, 70, 24, '='); rect(51, 14, 51, 24, '='); rect(70, 14, 70, 24, '=');
+  for (let y = 13; y <= 25; y++) put(50, y, 'T');
   for (const [x, y] of [[60, 9], [66, 8], [68, 11], [52, 26], [60, 26], [66, 26], [64, 16], [62, 12], [69, 3]]) put(x, y, 'T');
 
   const SOLID = new Set(['#', 'C', 'M', 'T', '~', 'B', 'D']);
@@ -373,9 +374,8 @@
     { t: 'Métro Sainte-Anne', x: 16.5 * T, y: 4.4 * T },
     { t: 'Station vide', x: 32 * T, y: 13.4 * T },
     { t: 'Parc du Thabor', x: 29 * T, y: 1.5 * T },
-    { t: 'Le Diapason', x: 42.8 * T, y: 17.1 * T },
+    { t: 'Le Diapason', x: 43.8 * T, y: 17.1 * T },
     { t: 'Fac de sciences éco', x: 3.4 * T, y: 5.5 * T },
-    { t: 'Rocade', x: 48.5 * T, y: 13.2 * T },
     { t: 'Rennes 2', x: 54 * T, y: 2.6 * T },
     { t: 'GRÈVE', x: 54 * T, y: 4.2 * T, c: '#ff6b6b' },
     { t: 'Métro Villejean-Université', x: 55.5 * T, y: 8.4 * T },
@@ -413,11 +413,11 @@
   const otSpot = { x: 32 * T, y: 13 * T + 10, wasNear: false };
   let solvedCount = 0, hasBike = false, otDone = false;
   const SUPS = [
-    { key: 'loic', name: 'Loïc', x: 39 * T + 8, y: 16 * T + 12, img: LOIC, found: false, wasNear: false },
+    { key: 'loic', name: 'Loïc', x: 40 * T + 8, y: 17 * T + 12, img: LOIC, found: false, wasNear: false },
     { key: 'vero', name: 'Véronique', x: 4 * T + 8, y: 9 * T + 12, img: VERO, found: false, wasNear: false },
-    { key: 'ioana', name: 'Ioana', x: 50 * T + 8, y: 14 * T + 14, img: IOANA, found: false, seg: 0, cool: 0, flip: false },
+    { key: 'ioana', name: 'Ioana', x: 51 * T + 8, y: 14 * T + 14, img: IOANA, found: false, seg: 0, cool: 0, flip: false },
   ];
-  const IOANA_LOOP = [[50, 14], [70, 14], [70, 24], [50, 24]].map(([x, y]) => ({ x: x * T + 8, y: y * T + 14 }));
+  const IOANA_LOOP = [[51, 14], [70, 14], [70, 24], [51, 24]].map(([x, y]) => ({ x: x * T + 8, y: y * T + 14 }));
   const PIGEON_SPOTS = [[8, 6], [11, 4], [12, 8], [14, 6], [7, 3]].map(([x, y]) => ({ x: x * T + 8, y: y * T + 10 }));
   const pigeon = { x: PIGEON_SPOTS[0].x, y: PIGEON_SPOTS[0].y, spot: 0, fly: null, linger: 0, flip: false };
   // Three choke points: the Thabor's west gate, the south end of the footbridge, the centre's south entrance.
@@ -1475,10 +1475,15 @@
     ents.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
     // Tunnel mouths under the rocade: horizontal traffic disappears into them (drawn over the cars).
     for (const [ty, rows] of [[14, 2], [24, 1]]) {
-      const x0 = CITY_W * T - cx, y0 = ty * T - cy;
-      ctx.fillStyle = '#141218'; ctx.fillRect(x0, y0 - 2, 3 * T, rows * T + 4);
-      ctx.fillStyle = '#7d828b'; ctx.fillRect(x0 - 3, y0 - 5, 3, rows * T + 10); ctx.fillRect(x0 - 3, y0 - 5, 3 * T + 3, 3);
-      ctx.fillStyle = '#5a5f68'; for (let k = 0; k < rows * T + 10; k += 4) ctx.fillRect(x0 - 3, y0 - 5 + k, 3, 1);
+      const x0 = CITY_W * T - cx, y0 = ty * T - cy, hgt = rows * T;
+      ctx.fillStyle = '#3f6f3a'; ctx.fillRect(x0, y0 - 6, 2 * T + 4, hgt + 12); // grassy embankment of the rocade
+      ctx.fillStyle = '#141218'; ctx.fillRect(x0 + 2, y0 - 1, 2 * T, hgt + 2);  // the dark mouth
+      ctx.fillStyle = '#8a8f99'; ctx.fillRect(x0, y0 - 4, 3, hgt + 7); ctx.fillRect(x0, y0 - 4, 2 * T + 4, 3);
+      ctx.fillStyle = '#6b6f78'; for (let k = 0; k < hgt + 7; k += 4) ctx.fillRect(x0, y0 - 4 + k, 3, 1);
+      const sx = x0 - 26, sy = y0 - 15; // blue road sign
+      ctx.fillStyle = '#5a5f68'; ctx.fillRect(sx + 11, sy + 9, 1, 7);
+      ctx.fillStyle = '#2e5aa8'; ctx.fillRect(sx, sy, 24, 9); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.6; ctx.strokeRect(sx + 0.8, sy + 0.8, 22.4, 7.4);
+      centered('Tunnel', sx + 12, sy + 4.6, '#ffffff', 5);
     }
     for (const h of hearts) {
       ctx.globalAlpha = Math.max(0, 1 - h.t / 1.3);
