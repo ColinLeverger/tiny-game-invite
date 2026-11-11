@@ -29,7 +29,14 @@
       let b = m[1].replace(/-/g, '+').replace(/_/g, '/');
       while (b.length % 4) b += '=';
       const bytes = Uint8Array.from(atob(b), (c) => c.charCodeAt(0));
-      return JSON.parse(new TextDecoder().decode(bytes)) || {};
+      const raw = JSON.parse(new TextDecoder().decode(bytes));
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+      const LIMITS = { b: 80, a: 160, h: 20, s: 160, sh: 20, c1: 20, c2: 20, food: 800, m: 400, f: 60, p: 24 };
+      const clean = {};
+      for (const [k, max] of Object.entries(LIMITS)) {
+        if (typeof raw[k] === 'string' && raw[k].trim()) clean[k] = raw[k].trim().slice(0, max);
+      }
+      return clean;
     } catch (e) { return {}; }
   }
   const INV = readInvite();
@@ -462,8 +469,8 @@
       src.connect(audio.destination); src.start(0); // a silent sample, played inside the gesture, unlocks iOS
     } catch (e) { /* ignore */ }
   }
-  function setSound(on, quiet) {
-    soundOn = on; store.set('invite-sound', on ? 'on' : 'off');
+  function setSound(on, quiet, persist = true) {
+    soundOn = on; if (persist) store.set('invite-sound', on ? 'on' : 'off');
     if (on) {
       try {
         // iOS 17+: the "playback" session plays even with the silent switch on.
@@ -475,7 +482,7 @@
       if (!quiet && state === 'play') showToast(IOS ? 'Son activé ♪ (rien ? regarde le bouton silencieux)' : 'Son activé ♪', 2.4);
     }
     const b = document.querySelector('#pad button[data-k=sound]'); if (b) b.textContent = soundOn ? '♪' : '×';
-    const c = $('soundOn'); if (c) c.checked = soundOn;
+    const c = $('soundOn'); if (c && persist) c.checked = soundOn; // the initial muted state must not untick the saved preference
   }
 
   const LANES = [
@@ -604,6 +611,7 @@
     showToast(hard ? '{c2} a filé ! Approche à pas de loup : Maj ou bouton B.' : '{c2} est craintif… il a filé un peu plus loin !');
   }
 
+  let rapStage = 0;
   function meetRapporteur() {
     if (fragments() < 2) {
       say([['Rapporteur', 'Halte. Il manque des morceaux à votre démonstration. Revenez avec les deux fragments.']]);
@@ -614,15 +622,21 @@
       ['Ketsia', 'Merci {name} ! Sans toi, {c2} serait encore assis sur Châteaubourg.'],
       ['', 'Les deux chats filent sous une banquette. L\'invitation est à toi.'],
     ], () => { meet('rap'); showCard(); });
-    const quiz = () => startPuzzle(makeQuiz('Rapporteur · question 2', 'Rapporteur · question 2',
+    // The exam remembers how far you got (rapStage), so quitting at question 2 or 3 resumes there.
+    const q3 = () => startPuzzle(makeQuiz('Rapporteur · question 3', 'Rapporteur · question 3',
+      'Qui a posé le problème du transport optimal, en 1781 ?', ['Leonhard Euler', '{c2}', 'Gaspard Monge'], 2), finish);
+    const q2 = () => startPuzzle(makeQuiz('Rapporteur · question 2', 'Rapporteur · question 2',
       'Quelle distance compare deux réseaux sans savoir quel carrefour correspond à quel carrefour ?',
-      ['Distance de Manhattan', 'Gromov-Wasserstein', 'Distance à vol de pigeon'], 1),
-    () => startPuzzle(makeQuiz('Rapporteur · question 3', 'Rapporteur · question 3',
-      'Qui a posé le problème du transport optimal, en 1781 ?', ['Leonhard Euler', '{c2}', 'Gaspard Monge'], 2), finish));
+      ['Distance de Manhattan', 'Gromov-Wasserstein', 'Distance à vol de pigeon'], 1), () => { rapStage = 2; q3(); });
+    const anomaly = () => startPuzzle(makeAnomaly(), () => { if (extreme) { rapStage = 1; q2(); } else finish(); });
+    if (extreme && rapStage > 0) {
+      say([['Rapporteur', `Reprenons. Question ${rapStage + 1}.`]], rapStage === 1 ? q2 : q3);
+      return;
+    }
     say([
       ['Rapporteur', extreme ? 'Je suis le rapporteur. Trois questions avant d\'entrer. Pas une de moins.' : 'Je suis le rapporteur. Une dernière question avant d\'entrer.'],
       ['Rapporteur', 'Voici des trajets de voitures. L\'un d\'eux est une anomalie. Lequel ?'],
-    ], () => startPuzzle(makeAnomaly(), extreme ? quiz : finish));
+    ], anomaly);
   }
   function makeQuiz(title, label, q, opts, good) {
     const boxes = () => {
@@ -789,7 +803,7 @@
     };
     return {
       title: '{c1} · Partitionnement', label: '{c1} · partitionnement',
-      help: ['Touche un rond pour changer sa couleur (3 quartiers).', 'But : le moins de routes possible entre deux couleurs différentes.'],
+      help: ['Touche un rond pour changer sa couleur : 3 quartiers, au moins 2 carrefours chacun.', 'But : le moins de routes possible entre deux couleurs différentes.'],
       draw() {
         for (const [u, v] of edges) {
           const [x1, y1] = nodes[u], [x2, y2] = nodes[v];
@@ -1054,14 +1068,14 @@
   // Puzzle buttons: top-right in landscape, a thumb row at the bottom in portrait.
   const quitBox = () => (portrait ? { x: 6, y: H - 15, w: 48, h: 12 } : { x: W - 52, y: 4, w: 48, h: 12 });
   const helpBox = () => (portrait ? { x: W / 2 - 24, y: H - 15, w: 48, h: 12 } : { x: W - 104, y: 4, w: 48, h: 12 });
-  const skipBox = () => (portrait ? { x: W - 54, y: H - 15, w: 48, h: 12 } : { x: W - 156, y: 4, w: 48, h: 12 });
+  const skipBox = () => (portrait ? { x: W - 60, y: H - 15, w: 56, h: 12 } : { x: W - 164, y: 4, w: 56, h: 12 }); // "Passer (100)": skip, 100 points
   const SKIP_AFTER = 15, PUZZLE_LIMIT = 45;
 
   function drawPuzzle() {
     ctx.fillStyle = '#1d1a2b'; ctx.fillRect(0, 0, W, H);
     ctx.textAlign = 'left'; ctx.fillStyle = '#f2c14b'; ctx.font = `bold ${portrait ? 8 : 9}px ${FONT}`;
     let y = 12;
-    for (const l of wrap(puzzle.title, W - (portrait ? 12 : 164))) { ctx.fillText(l, 6, y); y += 10; }
+    for (const l of wrap(puzzle.title, W - (portrait ? 12 : 172))) { ctx.fillText(l, 6, y); y += 10; }
     ctx.fillStyle = '#c9c3dc'; ctx.font = `7px ${FONT}`;
     for (const h of puzzle.help) for (const l of wrap(h, W - 12)) { ctx.fillText(l, 6, y); y += 8; }
     if (portrait) pmap = { ox: 18, oy: y + 10, sx: (W - 36) / 122, sy: (H - 50 - y - 10) / 260 };
@@ -1069,7 +1083,7 @@
     if (puzzle.wonT < 0) {
       button(quitBox(), 'Quitter');
       if (!puzzle.noGuide && !extreme) button(helpBox(), puzzle.guided ? 'Aide ✓' : 'Aide', puzzle.guided);
-      if (puzzle.time > SKIP_AFTER && !extreme) button(skipBox(), 'Valider ▸');
+      if (puzzle.time > SKIP_AFTER && !extreme) button(skipBox(), 'Passer (100)');
       if (extreme) {
         const left = Math.max(0, Math.ceil(PUZZLE_LIMIT - puzzle.time));
         const b = helpBox();
@@ -1328,7 +1342,7 @@
         puzzle.wonT += dt;
         if (puzzle.wonT > 1.1) {
           const { label, wrong, hints, skipped, solvedAt, done: d } = puzzle;
-          stats.puzzles.push({ label, time: Math.round(solvedAt), wrong, hints, skipped });
+          if (!stats.puzzles.some((q) => q.label === label)) stats.puzzles.push({ label, time: Math.round(solvedAt), wrong, hints, skipped });
           delete carry[label];
           puzzle = null; state = 'play'; d();
         }
@@ -1745,7 +1759,8 @@
     if (!stats.played || state === 'end' || state === 'name') return;
     store.set(SAVE_KEY, JSON.stringify({
       v: 1, name: playerName, mode: extreme ? 'extreme' : hard ? 'hard' : 'normal', at: Date.now(),
-      px: player.x, py: player.y, cp: checkpoint, solvedCount, hasBike, otDone, climbDone, carry,
+      px: player.x, py: player.y, cp: checkpoint, solvedCount, hasBike, otDone, climbDone, rapStage,
+      carry: puzzle && puzzle.wonT < 0 ? { ...carry, [puzzle.label]: { wrong: puzzle.wrong, hints: puzzle.hints } } : carry,
       cats: cats.map((c) => ({ solved: c.solved, escaped: !!c.escaped, order: c.order, x: c.x, y: c.y, spot: c.spot || 0, fled: c.fled || 0 })),
       sups: SUPS.map((p) => p.found), stats: { ...stats, elapsed: Date.now() - stats.start },
     }));
@@ -1756,7 +1771,7 @@
     trafficMul = extreme ? 1.9 : hard ? 1.3 : 1;
     player.x = sv.px; player.y = sv.py; checkpoint = sv.cp;
     sv.cats.forEach((c, i) => Object.assign(cats[i], c, { run: null, wait: false }));
-    ({ solvedCount, hasBike, otDone, climbDone } = sv); carry = sv.carry || {};
+    ({ solvedCount, hasBike, otDone, climbDone } = sv); carry = sv.carry || {}; rapStage = sv.rapStage || 0;
     SUPS.forEach((p, i) => { p.found = !!sv.sups[i]; });
     Object.assign(stats, sv.stats); stats.start = Date.now() - (sv.stats.elapsed || 0); delete stats.elapsed;
     for (const c of following()) { c.x = player.x; c.y = player.y; }
@@ -1769,8 +1784,13 @@
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') snapshot(); });
 
   let cardShown = false, barT = 0, endAt = 0;
+  let finalDip = null;
   function showCard() { // first the bar scene; the card pops up after a few seconds or a tap
     state = 'end'; cardShown = false; barT = 0; endAt = Date.now();
+    if (stats.played) { // store the diploma first: closing during the bar scene must not lose the run
+      stats.end = endAt; finalDip = diploma();
+      store.set('invite-diploma', JSON.stringify(finalDip));
+    }
     store.set(SAVE_KEY, ''); SFX.win();
     $('nameBox').classList.add('hidden');
   }
@@ -1808,9 +1828,7 @@
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
     if (badges.length) { $('cBadge').textContent = N(badges.join(' ')); $('cBadge').classList.remove('hidden'); }
     if (stats.played) {
-      stats.end = endAt;
-      const dip = diploma();
-      store.set('invite-diploma', JSON.stringify(dip));
+      const dip = finalDip || diploma();
       $('cPdf').classList.remove('hidden');
       $('cPdf').onclick = (e) => { e.preventDefault(); downloadPdf(dip); };
       $('cScore').textContent = `Ton score : ${dip.score} points · mention ${dip.mention}. Ton diplôme t'attend en PDF : montre-le au bar !`;
@@ -2003,7 +2021,7 @@
     ];
     if (d.extreme) rows.push(['Visites du Reviewer 2', String(d.ghost || 0)]);
     d.puzzles.forEach((p) => {
-      const detail = p.skipped ? 'validé sans finir' : `${fmtTime(p.time)} · ${plural(p.wrong, 'erreur')} · ${plural(p.hints, 'indice')}`;
+      const detail = p.skipped ? 'passé sans le résoudre' : `${fmtTime(p.time)} · ${plural(p.wrong, 'erreur')} · ${plural(p.hints, 'indice')}`;
       rows.push([p.label, `${detail} · ${p.score} pts`]);
     });
     if (!d.bonus) rows.push(['Bonus · transport optimal', 'non tenté']);
@@ -2079,9 +2097,9 @@
   /* ================= name screen ================= */
   const nameInput = $('nameInput');
   nameInput.value = INV.p || store.get('invite-name') || '';
-  setSound(false, true);
+  if ($('soundOn')) $('soundOn').checked = store.get('invite-sound') === 'on'; // read the preference first
+  setSound(false, true, false); // start muted (audio needs a gesture) without overwriting the preference
   ['touchend', 'click'].forEach((ev) => document.addEventListener(ev, () => { if (soundOn) unlockAudio(); }, { passive: true }));
-  if ($('soundOn')) $('soundOn').checked = store.get('invite-sound') === 'on';
   function takeName() {
     if ($('soundOn')) setSound($('soundOn').checked, true);
     playerName = nameInput.value.trim().slice(0, 24) || 'toi';
@@ -2110,7 +2128,7 @@
       const l = $('resumeLink');
       l.textContent = `Reprendre ma partie en cours (${sv.name}, ${sv.mode === 'extreme' ? 'EXTRÊME' : sv.mode === 'hard' ? 'difficile' : 'normal'})`;
       l.classList.remove('hidden');
-      l.addEventListener('click', (e) => { e.preventDefault(); setSound(store.get('invite-sound') === 'on' && $('soundOn').checked, true); resume(sv); });
+      l.addEventListener('click', (e) => { e.preventDefault(); setSound($('soundOn').checked, true); resume(sv); });
     }
   }
   $('skipLink').addEventListener('click', (e) => { e.preventDefault(); takeName(); showCard(); });
@@ -2281,6 +2299,6 @@
   if (new URLSearchParams(location.search).has('test')) window.__invite = {
     art, snapshot, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
     get state() { return state; }, get hasBike() { return hasBike; }, get otDone() { return otDone; },
-    player, cats, rap, keys, stats, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
+    player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
   };
 })();

@@ -39,8 +39,12 @@
   .dpad button { border-radius: 12px; }
   .side { display: flex; gap: 8px; align-items: flex-end; margin-left: auto; }
   .abtn { width: 48px; height: 48px; border-radius: 50%; }
-  .abtn.big { width: 60px; height: 60px; display: none; }
+  .abtn.big { display: none; }
   .showpad .abtn.big { display: inline-block; }
+  /* With the d-pad shown, the four round buttons form a 2x2 block so everything fits 320 px. */
+  .showpad .side { display: grid; grid-template-columns: repeat(2, 46px); gap: 6px; }
+  .showpad .side .abtn { width: 46px; height: 46px; }
+  .showpad .dpad { grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); }
   .modes { border: 3px solid var(--ink); padding: 8px 10px; margin: 14px 0 0; }
   .modes legend { font-weight: bold; padding: 0 4px; }
   .modes label { font-weight: normal; margin: 4px 0; }

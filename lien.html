@@ -17,6 +17,9 @@
   textarea { min-height: 80px; }
   .hint { font-size: 13px; margin: 4px 0 0; }
   .warn { background: #ffe9a8; border-left: 6px solid #d9a400; padding: 8px 10px; font-size: 14px; }
+  .inline { font-weight: normal; display: flex; gap: 8px; align-items: center; }
+  .inline input { width: auto; }
+  #forget { background: #fff; margin-left: 8px; }
   button { margin-top: 16px; font: bold 16px monospace; padding: 10px 14px; border: 3px solid var(--ink); background: var(--gold); cursor: pointer; }
   ul { padding-left: 0; list-style: none; }
   li { margin: 10px 0; border-top: 1px dashed var(--ink); padding-top: 8px; word-break: break-all; font-size: 13px; }
@@ -47,7 +50,10 @@
     <label for="names">Prénoms des invité·e·s (un par ligne, optionnel)</label>
     <textarea id="names" placeholder="Alice&#10;Bob"></textarea>
     <p class="hint">Un lien par prénom : le jeu s'ouvre avec le prénom déjà rempli. Laisse vide pour un seul lien générique.</p>
+    <label class="inline"><input type="checkbox" id="remember"> Mémoriser ces informations sur cet appareil</label>
+    <p class="hint">Décoché, rien n'est gardé une fois l'onglet fermé. Coché, tout reste dans ce navigateur (jamais envoyé ailleurs) jusqu'à « Effacer ».</p>
     <button type="submit">Générer</button>
+    <button type="button" id="forget">Effacer les données mémorisées</button>
   </form>
   <ul id="out"></ul>
 </main>
@@ -55,7 +61,15 @@
 'use strict';
 const FIELDS = ['b', 'a', 'h', 's', 'sh', 'c1', 'c2', 'food', 'm', 'from'];
 const $ = (id) => document.getElementById(id);
-try { const saved = JSON.parse(localStorage.getItem('invite-links') || '{}'); FIELDS.concat('names').forEach((k) => { if (saved[k]) $(k).value = saved[k]; }); } catch (e) { /* ignore */ }
+try {
+  const saved = JSON.parse(localStorage.getItem('invite-links') || 'null');
+  if (saved) { FIELDS.concat('names').forEach((k) => { if (saved[k]) $(k).value = saved[k]; }); $('remember').checked = true; }
+} catch (e) { /* ignore */ }
+$('forget').addEventListener('click', () => {
+  try { localStorage.removeItem('invite-links'); } catch (e) { /* ignore */ }
+  FIELDS.concat('names').forEach((k) => { $(k).value = k === 'h' ? '19h' : ''; });
+  $('remember').checked = false; $('out').textContent = '';
+});
 
 function b64url(obj) {
   const bytes = new TextEncoder().encode(JSON.stringify(obj));
@@ -67,7 +81,10 @@ $('f').addEventListener('submit', (e) => {
   e.preventDefault();
   const base = { b: $('b').value, a: $('a').value, h: $('h').value, s: $('s').value, sh: $('sh').value, c1: $('c1').value, c2: $('c2').value, food: $('food').value, m: $('m').value, f: $('from').value };
   Object.keys(base).forEach((k) => { base[k] = base[k].trim(); if (!base[k]) delete base[k]; });
-  try { const keep = {}; FIELDS.concat('names').forEach((k) => { keep[k] = $(k).value; }); localStorage.setItem('invite-links', JSON.stringify(keep)); } catch (err) { /* ignore */ }
+  try {
+    if ($('remember').checked) { const keep = {}; FIELDS.concat('names').forEach((k) => { keep[k] = $(k).value; }); localStorage.setItem('invite-links', JSON.stringify(keep)); }
+    else localStorage.removeItem('invite-links');
+  } catch (err) { /* ignore */ }
   const page = new URL('index.html', location.href); page.hash = '';
   const names = $('names').value.split('\n').map((n) => n.trim()).filter(Boolean);
   const out = $('out'); out.textContent = '';
