@@ -10,16 +10,18 @@ Le jeu marche sur téléphone, en portrait comme en paysage, et sur ordinateur a
 
 ## Le jeu
 
-- On guide Ketsia du campus de Beaulieu au centre-ville de Rennes, en évitant voitures, bus et camions.
+- On aide Ketsia à retrouver ses deux chats, partis avec la démonstration de sa dernière diapo, puis on la guide
+  du campus de Beaulieu au bar du centre-ville, en évitant voitures, bus et camions.
 - Le premier chat (au Thabor) garde un puzzle de partitionnement de graphe.
 - Le second chat (au sud de la Vilaine) garde un puzzle d'appariement de graphes, façon Gromov-Wasserstein.
   Il est craintif : en mode difficile, il faut l'approcher « à pas de loup » (Maj, ou bouton B).
 - Le rapporteur, devant le bar, pose une question de détection d'anomalie.
 - Bonus : la station de vélos du campus donne un vélo, qui débloque un défi de transport optimal.
 - Sur téléphone, toucher la carte fait marcher Ketsia vers le doigt ; le pavé doré reste en bas de l'écran.
-- Quatre stations de métro, dont Villejean, de l'autre côté de la rocade. On peut caresser les chats qui suivent Ketsia.
+- Le métro mène jusqu'à Villejean. On peut caresser les chats qui suivent Ketsia.
+- Des bancs : s'y arrêter un instant donne une petite histoire des mathématiques (dix en tout).
 - Quête annexe : retrouver les trois encadrant·es de Ketsia quelque part dans Rennes.
-- Bruitages 8-bit (coupés par défaut), un pigeon voleur de tapas, une photo souvenir en PNG.
+- Musique et bruitages 8-bit (coupés par défaut), un pigeon voleur de tapas, une photo souvenir en PNG.
 - Trois modes : Normal, Difficile, et un troisième dont on garde la surprise.
 - Chaque puzzle a trois boutons : Quitter (ou Échap), Aide (guidage pas à pas) et Valider (après 15 s).
 - Il y a aussi un easter egg, que ce README ne dévoile pas.

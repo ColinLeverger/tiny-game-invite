@@ -4,7 +4,7 @@
   // Logical screen: 320x180 in landscape, 180x300 in portrait (phones held upright).
   let W = 320, H = 180, portrait = false;
   const S = 3, T = 16;
-  const MAP_W = 72, MAP_H = 28, CITY_W = 48; // x >= 48: Villejean, behind the rocade (metro only)
+  const MAP_W = 72, MAP_H = 28, CITY_W = 48; // x >= 48: Villejean, behind a line of trees (metro only)
   const cv = document.getElementById('game');
   cv.width = W * S; cv.height = H * S;
   const ctx = cv.getContext('2d');
@@ -131,6 +131,10 @@
     'flllf.....wwwwww', 'fFFFFf...wwwwww.', '.flllf..FfwwwwF.', '.fFFFFf.FfflwfF.',
     '..fllllfFffllffF', '...fFFFfFfffffff', '....fllFfffffffF', '.....ffFfffffF..'];
   const NOBLECAT = [makeSprite([...T_BODY, '.......FwF.FwF..'], PT), makeSprite([...T_BODY, '........FwF.FwF.'], PT)];
+  const BIGCAT_L = flipH(BIGCAT[0]); // built once: the bar scene used to make a new canvas every frame
+  // The cats' heads, for the HUD: lit once the cat follows you.
+  const HEAD1 = makeSprite(['F.......F', 'Ff.....fF', 'FfffffffF', 'ffefffeff', 'fffffffff', 'ffffnffff', '.wwwwwww.', '..wwwww..'], PT);
+  const HEAD2 = makeSprite(['G.......G', 'Gg.....gG', 'GgggggggG', 'ggegggegg', 'ggggggggg', 'ggggngggg', '.GgggggG.', '..GGGGG..'], PU);
 
   // The "rapporteur" guarding the bar.
   const PR = { k: '#1e1a22', S: '#e8b896', e: '#ffffff', m: '#9a5550', N: '#2c3a5e', w: '#f2f2f2', R: '#d23c3c', K: '#1e1a22' };
@@ -269,7 +273,9 @@
         box(10, 9, 4, 4, '#ffcf6a'); box(10, 11, 4, 1, '#e0a840'); break;
       case 'v': rack(true); break;
       case 'o': rack(false); break;
-      case 'n': grass(); box(2, 6, 12, 2, '#8a5a32'); box(2, 9, 12, 2, '#8a5a32'); box(3, 11, 1, 3, '#4a3020'); box(12, 11, 1, 3, '#4a3020'); break;
+      case 'n': case 'N': // a bench, on grass (n) or on paving (N)
+        if (ch === 'n') grass(); else paving();
+        box(2, 6, 12, 2, '#8a5a32'); box(2, 9, 12, 2, '#8a5a32'); box(3, 11, 1, 3, '#4a3020'); box(12, 11, 1, 3, '#4a3020'); break;
       case 'e': // metro entrance
         paving(); box(2, 3, 12, 11, '#3a3f4a'); for (let j = 5; j < 14; j += 2) box(3, j, 10, 1, '#5a606c');
         box(5, 0, 6, 3, '#d9534f'); box(7, 1, 2, 1, '#ffffff'); break;
@@ -303,6 +309,7 @@
   put(46, 12, 'e'); put(16, 4, 'e'); put(11, 23, 'e'); // metro: Beaulieu-Université, Sainte-Anne, Colombier
   put(38, 2, 'T'); put(38, 5, 'T'); put(47, 6, 'T'); put(39, 9, 'T'); put(45, 12, 'T'); put(47, 16, 'T'); put(46, 17, 'T');
   put(44, 5, 'n'); put(41, 12, 'n');
+  put(25, 8, 'n'); put(32, 6, 'n'); put(9, 9, 'N'); // benches: Thabor, centre (and the dalle Kennedy, below)
   // South of the river.
   rect(1, 21, 6, 22, '#'); rect(15, 21, 18, 22, '#'); rect(1, 26, 7, 27, '#'); rect(24, 21, 33, 22, '#'); rect(24, 26, 33, 27, '#');
   put(10, 27, 'T'); put(16, 26, 'T'); put(17, 27, 'T'); put(3, 23, 'T');
@@ -315,7 +322,7 @@
   // Villejean: Rennes 2 (on strike), the dalle Kennedy and its metro, the CHU block ringed by a loop road.
   for (let y = 0; y < MAP_H; y++) { put(48, y, 'T'); put(49, y, y % 2 ? 'T' : '.'); }
   rect(51, 1, 57, 5, 'C'); rect(60, 1, 64, 5, 'C');
-  rect(50, 8, 58, 11, 'p'); put(55, 9, 'e');
+  rect(50, 8, 58, 11, 'p'); put(55, 9, 'e'); put(52, 10, 'N');
   rect(53, 16, 58, 21, 'C'); rect(62, 17, 67, 21, 'f');
   rect(51, 14, 70, 14, '='); rect(51, 24, 70, 24, '='); rect(51, 14, 51, 24, '='); rect(70, 14, 70, 24, '=');
   for (let y = 13; y <= 25; y++) put(50, y, 'T');
@@ -460,6 +467,23 @@
     coo: () => { tone(420, 0.12, 'sine', 0.06, 80); tone(390, 0.16, 'sine', 0.06, -70, 0.14); },
     hello: () => { tone(587, 0.1, 'square', 0.04); tone(880, 0.16, 'square', 0.04, 0, 0.11); },
   };
+  // Background music: a short original 8-bit loop, scheduled a little ahead on the audio clock.
+  // It plays whenever the sound is on; it stops by itself when the tab is hidden (no frames, no notes).
+  const MEL = [72, 76, 79, 76, 74, 77, 81, 77, 72, 76, 79, 84, 83, 79, 77, 74, 72, 76, 79, 76, 77, 81, 84, 81, 79, 77, 76, 74, 72, 0, 72, 0];
+  const BASS = [48, 53, 48, 43, 48, 53, 43, 48];
+  const hz = (m) => 440 * 2 ** ((m - 69) / 12);
+  let musicAt = 0, musicStep = 0;
+  function musicTick() {
+    if (!soundOn || !audio || audio.state !== 'running' || state === 'name') { musicAt = 0; return; }
+    const now = audio.currentTime, step = state === 'end' ? 0.16 : 0.21; // faster at the party
+    if (musicAt < now) musicAt = now + 0.05;
+    while (musicAt < now + 0.3) {
+      const i = musicStep % MEL.length;
+      if (MEL[i]) tone(hz(MEL[i]), step * 0.85, 'square', 0.012, 0, musicAt - now);
+      if (i % 2 === 0) tone(hz(BASS[i >> 2]), step * 1.7, 'triangle', 0.03, 0, musicAt - now);
+      musicAt += step; musicStep++;
+    }
+  }
   const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function unlockAudio() {
     if (!audio) return;
@@ -517,7 +541,7 @@
   const meet = (k) => { if (!stats.met.includes(k)) stats.met.push(k); }; // what this guest ran into, in order
 
   const WHO = {
-    '': '#f2c14b', Ketsia: '#e9a3a6', '{c1}': '#c8ccd4', '{c2}': '#aab0b8', Rapporteur: '#e06060', 'Le jury': '#9cc0e6',
+    '': '#f2c14b', Ketsia: '#e9a3a6', '{c1}': '#c8ccd4', '{c2}': '#aab0b8', Rapporteur: '#e06060', 'Le jury': '#9cc0e6', Colin: '#7fb3e0',
   };
   function say(lines, done) {
     dlg = { lines: lines.map(([who, text]) => ({ who: N(who), key: who, text: N(text) })), i: 0, t: 0, done };
@@ -545,14 +569,14 @@
     const seen = store.get('invite-seen-intro') === 'yes';
     store.set('invite-seen-intro', 'yes');
     const lines = seen ? [
-      ['Ketsia', 'Re-bonjour {name} ! Tu connais l\'histoire : {c2} et {c1} ont filé avec le graphe. On y retourne ?'],
+      ['Ketsia', 'Re-bonjour {name} ! Tu connais l\'histoire : mes chats, {c2} et {c1}, ont filé avec ma démonstration. On y retourne ?'],
     ] : [
       ['', 'Rennes, mardi 1er décembre 2026, campus Hoche. Ketsia vient de soutenir sa thèse : partitionner des graphes, avec du transport optimal, pour comprendre la circulation en ville.'],
       ['Le jury', hope('Après délibération… félicitations, Docteure !')],
       ['', 'Ketsia file récupérer ses affaires à son labo, à Beaulieu, au pied de la tour des maths.'],
-      ['Ketsia', 'Ouf ! Maintenant, la fête. J\'avais caché l\'adresse du bar dans le graphe de ma dernière diapo…'],
-      ['Ketsia', '… et {c2} et {c1}, qui s\'étaient glissés dans mon sac, viennent de filer avec !'],
-      ['Ketsia', '{name}, tu m\'aides ? {c1} adore le Parc du Thabor. {c2} est sûrement parti au sud de la Vilaine.'],
+      ['Ketsia', 'Ouf ! Maintenant, la fête, au bar. Mais le rapporteur garde la porte : il veut revoir la démonstration de ma dernière diapo.'],
+      ['Ketsia', 'Problème : mes deux chats, {c2} et {c1}, s\'étaient glissés dans mon sac. Ils viennent de filer, chacun avec un morceau de la démonstration !'],
+      ['Ketsia', '{name}, tu m\'aides à retrouver mes chats ? {c1} adore le Parc du Thabor. {c2} est sûrement parti au sud de la Vilaine.'],
       ['', 'Déplace Ketsia avec les flèches, ZQSD ou le pavé tactile. Attention aux voitures, aux bus et aux camions : la circulation, c\'est son sujet de thèse, pas son sport.'],
       ['', 'Astuce : une station de vélos se cache quelque part sur le campus. Et le métro mène loin.'],
     ];
@@ -571,7 +595,7 @@
       say([
         ['{c1}', 'Mrrp.'],
         ['', '{c1} trône au milieu des massifs, la queue en panache. Noble parmi les nobles.'],
-        ['Ketsia', '{c1} ! Rends-moi le fragment du graphe !'],
+        ['Ketsia', '{c1} ! Rends-moi le morceau de ma démonstration !'],
         ['', '{c1} pose une patte aristocratique sur un graphe de carrefours tout emmêlé. Il faut le partitionner en 3 quartiers.'],
       ], () => startPuzzle(makePartition(), () => catSolved(cat), () => { cat.wait = true; }));
     } else {
@@ -593,12 +617,12 @@
     checkpoint = { x: player.x, y: player.y };
     trail = [];
     const lines = cat.key === 'cat1'
-      ? [['{c1}', 'Prrrt.'], ['', '{c1} lâche le fragment et te suit, la queue haute, comme à la parade.']]
-      : [['{c2}', 'Mraou…'], ['', '{c2} se lève. Lentement. Il lâche le fragment et te suit, en restant prudemment derrière.']];
+      ? [['{c1}', 'Prrrt.'], ['', '{c1} lâche le morceau de démonstration et te suit, la queue haute, comme à la parade.']]
+      : [['{c2}', 'Mraou…'], ['', '{c2} se lève. Lentement. Il lâche le morceau de démonstration et te suit, en restant prudemment derrière.']];
     if (solvedCount === 1) lines.push(['', 'Astuce : touche un chat qui te suit (ou Espace) pour le caresser.']);
     lines.push(solvedCount === 2
-      ? ['Ketsia', 'Les deux fragments ! L\'adresse mène au centre-ville. Allons-y, {name} !']
-      : ['Ketsia', `Fragment 1 sur 2 ! Il reste ${cats.find((c) => !c.solved).name}.`]);
+      ? ['Ketsia', 'Mes deux chats, et toute ma démonstration ! Direction le bar, au centre-ville : le rapporteur nous attend.']
+      : ['Ketsia', `Un chat sur deux ! Il reste ${cats.find((c) => !c.solved).name}.`]);
     say(lines);
   }
 
@@ -614,7 +638,7 @@
   let rapStage = 0;
   function meetRapporteur() {
     if (fragments() < 2) {
-      say([['Rapporteur', 'Halte. Il manque des morceaux à votre démonstration. Revenez avec les deux fragments.']]);
+      say([['Rapporteur', 'Halte. Il manque des morceaux à votre démonstration. Revenez avec les deux chats… et ce qu\'ils ont emporté.']]);
       return;
     }
     const finish = () => say([
@@ -688,7 +712,7 @@
   }
   function recatch(c) {
     c.escaped = false; SFX.meow();
-    say([[c.name, c.key === 'cat1' ? 'Mrrp ?' : 'Mraou…'], ['', `${c.name} accepte de te suivre à nouveau, avec son fragment.`]]);
+    say([[c.name, c.key === 'cat1' ? 'Mrrp ?' : 'Mraou…'], ['', `${c.name} accepte de te suivre à nouveau, avec son morceau de démonstration.`]]);
   }
   function escapeCat(c) {
     c.escaped = true; c.wait = false;
@@ -1190,13 +1214,69 @@
       ['', 'Ketsia pose la main sur une prise, toute blanche de magnésie.'],
       ['Ketsia', 'Tu savais que la tour des maths a un mur d\'escalade ? Une petite voie avant la fête, {name} ?'],
     ], () => startPuzzle(makeClimb(), () => {
-      climbDone = true; meet('climb');
+      climbDone = true; meet('climb'); meet('colin');
+      colin.x = player.x; colin.y = player.y;
       say([
         ['Ketsia', 'Au sommet ! D\'ici, on voit tout le graphe de Rennes. Même {c2}, tout petit.'],
-        ['', 'Easter egg trouvé : badge secret « Grimpeur·se de la tour des maths ».'],
+        ['Colin', 'Ketsia ?! Je suis monté voir le coucher de soleil sur Rennes. Tu as l\'air bien pressée…'],
+        ['Ketsia', 'Colin ! Viens avec nous, on descend : direction le bar !'],
+        ['', 'Easter egg trouvé : Colin te suit jusqu\'au bar. Et badge secret « Grimpeur·se de la tour des maths ».'],
       ]);
     }));
     return true;
+  }
+  // Colin, found at the top of the maths tower, walks behind the cats with a little heart over his head.
+  const colin = { x: 0, y: 0, moving: false };
+  function colinPos() {
+    const idx = trail.length - 1 - (following().length + 1) * 18;
+    if (idx < 0) { colin.moving = false; return colin; }
+    const p = trail[idx];
+    colin.moving = colin.x !== p.x || colin.y !== p.y;
+    colin.x = p.x; colin.y = p.y;
+    return colin;
+  }
+
+  /* ----- benches: sit for a moment and hear a story from the history of mathematics ----- */
+  const STORIES = [
+    [['Ketsia', 'En 1736, Euler se demande si l\'on peut traverser les sept ponts de Königsberg une seule fois chacun.'],
+      ['Ketsia', 'Réponse : non. Pour le prouver, il réduit la ville à des points et des traits. La théorie des graphes vient de naître.']],
+    [['Ketsia', 'En 1781, Gaspard Monge veut déplacer des tas de terre, les « déblais », vers des trous, les « remblais », en se fatiguant le moins possible.'],
+      ['Ketsia', 'C\'est le premier problème de transport optimal : le cœur de ma thèse. Monge participera ensuite à la fondation de l\'École polytechnique.']],
+    [['Ketsia', 'En 1939, à Leningrad, Leonid Kantorovitch aide une fabrique de contreplaqué à mieux répartir son travail entre ses machines.'],
+      ['Ketsia', 'Il en tire une version plus souple du problème de Monge. Prix Nobel d\'économie en 1975, pour un problème de maths.']],
+    [['Ketsia', 'La distance de Wasserstein porte le nom de Leonid Vasershtein, qui l\'étudie en 1969. Roland Dobrushin la baptise ainsi en 1970, à l\'allemande.'],
+      ['Ketsia', 'Ironie : Kantorovitch l\'avait déjà définie en 1942. En maths, un nom ne dit pas toujours qui a trouvé quoi.']],
+    [['Ketsia', 'Sophie Germain étudie les maths en cachette, la nuit, à la bougie. Elle écrit à Lagrange, puis à Gauss, sous un nom d\'homme : « Monsieur Le Blanc ».'],
+      ['Ketsia', 'Gauss découvre la vérité en 1807. Il lui répond avec admiration : il faut, écrit-il, « le plus noble courage » à une femme pour franchir tous ces obstacles.']],
+    [['Ketsia', 'En 1918, Emmy Noether démontre qu\'à chaque symétrie de la nature correspond une quantité qui se conserve : l\'énergie, la quantité de mouvement…'],
+      ['Ketsia', 'Les physiciens s\'en servent encore tous les jours. Einstein parlera d\'elle comme d\'un génie des mathématiques.']],
+    [['Ketsia', 'Quatre couleurs suffisent pour colorier n\'importe quelle carte, sans que deux pays voisins aient la même. La question date de 1852.'],
+      ['Ketsia', 'Appel et Haken la démontrent en 1976, avec plus de mille heures de calcul sur ordinateur. Une première, qui a fait débat.']],
+    [['Ketsia', 'Évariste Galois meurt en duel en 1832, à 20 ans. La veille, il écrit à un ami une longue lettre qui résume ses découvertes sur les équations.'],
+      ['Ketsia', 'Ces idées fondent toute une branche de l\'algèbre : la théorie de Galois.']],
+    [['Ketsia', 'En 1843, Ada Lovelace publie des notes sur la machine analytique de Charles Babbage, avec une méthode pour calculer les nombres de Bernoulli.'],
+      ['Ketsia', 'On y voit souvent le tout premier programme informatique. La machine, elle, n\'a jamais été construite.']],
+    [['Ketsia', '« Un mathématicien est une machine à transformer le café en théorèmes. » La phrase est d\'Alfréd Rényi ; son ami Paul Erdős l\'a rendue célèbre.'],
+      ['Ketsia', 'Ce soir, on vérifie si ça marche aussi avec des tapas.']],
+  ];
+  const BENCHES = [];
+  for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if ('nN'.includes(grid[y][x])) BENCHES.push({ x: x * T + 8, y: y * T + 11, sat: false, t: 0 });
+  let storyNext = 0;
+  function updateBenches(dt) {
+    for (const b of BENCHES) {
+      const on = Math.abs(player.x - b.x) < 8 && Math.abs(player.y - b.y) < 7;
+      if (!on) { b.sat = false; b.t = 0; continue; }
+      if (b.sat || player.moving) { b.t = 0; continue; }
+      if ((b.t += dt) < 0.4) continue; // stop on the bench for a moment to sit down
+      b.sat = true; meet('bench');
+      const story = STORIES[storyNext % STORIES.length];
+      storyNext++;
+      const lines = [['', storyNext === 1 ? 'Ketsia s\'assoit sur le banc. Une petite histoire des mathématiques, en passant ?' : 'Ketsia s\'assoit sur le banc. Encore une histoire ?'], ...story];
+      if (storyNext === STORIES.length) lines.push(['', 'Tu as entendu toutes les histoires des bancs. Auditeur·rice assidu·e !']);
+      say(lines);
+      return true;
+    }
+    return false;
   }
   function updateGhost(dt) {
     if (!ghost.on) return false;
@@ -1355,7 +1435,7 @@
       if (metro.t > metro.dur) {
         const to = STATIONS[metro.to];
         player.x = to.out.x; player.y = to.out.y; player.dir = 'd'; trail = []; moveTarget = null;
-        for (const c of following()) { c.x = player.x; c.y = player.y; }
+        for (const c of [...following(), colin]) { c.x = player.x; c.y = player.y; }
         metroLock = metro.to; metro = null; state = 'play'; stats.metro++; meet('metro');
         showToast(`Terminus… non, ${to.name} !`, 1.8);
       }
@@ -1380,6 +1460,7 @@
     const noble = cats[0];
     if (catActive(noble) && !noble.wait && dist(player, noble) < 22) { if (noble.escaped) recatch(noble); else meetCat(noble); return; }
     if (updateClimbSpot(dt)) return;
+    if (updateBenches(dt)) return;
     if (updateBigcat(dt)) return;
     if (edge(rap, 26, meetRapporteur)) return;
     if (edge(bikeSpot, 26, meetBikes)) return;
@@ -1462,18 +1543,26 @@
     } });
     if (hasBike && !otDone) ents.push({ y: otSpot.y, draw: () => textShadow('★', otSpot.x - cx, otSpot.y - 14 - cy + Math.sin(time * 4) * 1.5, '#7fb3e0', 9) });
     ents.push({ y: player.y, draw: () => drawKetsia(cx, cy) });
+    if (climbDone) {
+      const c = colinPos();
+      ents.push({ y: c.y, draw: () => {
+        const sx = Math.round(c.x - 8 - cx), sy = Math.round(c.y - 16 - cy - (c.moving ? Math.floor(time * 8) % 2 : 0));
+        ctx.drawImage(COLIN, sx, sy);
+        textShadow('♥', c.x - cx, sy - 2 + Math.sin(time * 3) * 1.2, '#ff6b9a', 8);
+      } });
+    }
     for (const p of SUPS) {
       ents.push({ y: p.y, draw: () => {
         const img = p.flip ? flipped(p.img) : p.img;
         const sx = Math.round(p.x - img.width / 2 - cx), sy = Math.round(p.y - img.height - cy);
         ctx.drawImage(img, sx, sy);
         if (p.key === 'loic') { // a cigarette in his hand, and a thin wisp of smoke
-          ctx.fillStyle = '#efe6cf'; ctx.fillRect(sx + 14, sy + 11, 3, 1);
-          ctx.fillStyle = Math.floor(time * 3) % 2 ? '#ff7a3a' : '#ffb04a'; ctx.fillRect(sx + 17, sy + 11, 1, 1);
+          ctx.fillStyle = '#efe6cf'; ctx.fillRect(sx - 1, sy + 11, 3, 1); // left hand, as in real life
+          ctx.fillStyle = Math.floor(time * 3) % 2 ? '#ff7a3a' : '#ffb04a'; ctx.fillRect(sx - 2, sy + 11, 1, 1);
           for (let k = 0; k < 3; k++) {
             const ph = (time * 0.4 + k / 3) % 1;
             ctx.fillStyle = `rgba(220,220,230,${(1 - ph) * 0.5})`;
-            ctx.fillRect(sx + 17 + Math.sin(ph * 6 + k) * 1.5, sy + 9 - ph * 12, 1, 1);
+            ctx.fillRect(sx - 2 + Math.sin(ph * 6 + k) * 1.5, sy + 9 - ph * 12, 1, 1);
           }
         }
         if (p.key === 'vero') ctx.drawImage(SUITCASE, sx + 15, sy + 7);
@@ -1487,15 +1576,15 @@
       ctx.drawImage(img, Math.round(pigeon.x - 4 - cx), Math.round(pigeon.y - 6 - cy + bob));
     } });
     ents.sort((a, b) => a.y - b.y).forEach((e) => e.draw());
-    // Tunnel mouths under the rocade: horizontal traffic disappears into them (drawn over the cars).
+    // Tunnel mouths toward Villejean: horizontal traffic disappears into them (drawn over the cars).
     for (const [ty, rows] of [[14, 2], [24, 1]]) {
       const x0 = CITY_W * T - cx, y0 = ty * T - cy, hgt = rows * T;
       ctx.fillStyle = '#3f6f3a'; ctx.fillRect(x0, y0 - 6, 2 * T + 4, hgt + 12); // grassy embankment of the rocade
       ctx.fillStyle = '#141218'; ctx.fillRect(x0 + 2, y0 - 1, 2 * T, hgt + 2);  // the dark mouth
       ctx.fillStyle = '#8a8f99'; ctx.fillRect(x0, y0 - 4, 3, hgt + 7); ctx.fillRect(x0, y0 - 4, 2 * T + 4, 3);
       ctx.fillStyle = '#6b6f78'; for (let k = 0; k < hgt + 7; k += 4) ctx.fillRect(x0, y0 - 4 + k, 3, 1);
-      const sx = x0 - 26, sy = y0 - 15; // blue road sign
-      ctx.fillStyle = '#5a5f68'; ctx.fillRect(sx + 11, sy + 9, 1, 7);
+      const sx = x0 + 4, sy = y0 + hgt + 9; // blue road sign, under the mouth: well away from the Beaulieu metro
+      ctx.fillStyle = '#5a5f68'; ctx.fillRect(sx + 11, sy - 3, 1, 3);
       ctx.fillStyle = '#2e5aa8'; ctx.fillRect(sx, sy, 24, 9); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.6; ctx.strokeRect(sx + 0.8, sy + 0.8, 22.4, 7.4);
       centered('Tunnel', sx + 12, sy + 4.6, '#ffffff', 5);
     }
@@ -1533,22 +1622,26 @@
   function objective() {
     if (fragments() === 2) return { text: 'Objectif : le bar, au centre-ville', target: rap };
     const left = cats.filter(catActive);
-    if (left.length === 2) return { text: 'Objectif : {c1} (Thabor) et {c2} (sud de la Vilaine)', target: left.reduce((a, b) => (dist(player, a) < dist(player, b) ? a : b)) };
-    return { text: left[0].key === 'cat1' ? 'Objectif : {c1}, au Parc du Thabor' : 'Objectif : {c2}, au sud de la Vilaine', target: left[0] };
+    if (left.length === 2) return { text: 'Objectif : les chats de Ketsia, {c1} (Thabor) et {c2} (sud de la Vilaine)', target: left.reduce((a, b) => (dist(player, a) < dist(player, b) ? a : b)) };
+    return { text: left[0].key === 'cat1' ? 'Objectif : le chat {c1}, au Parc du Thabor' : 'Objectif : le chat {c2}, au sud de la Vilaine', target: left[0] };
   }
 
+  // On touch screens the objectives button is a real HTML button (#menuBtn), big and outside the
+  // canvas; with a keyboard and mouse it is drawn in the HUD, with a generous hit box.
+  const touchUI = () => document.documentElement.classList.contains('touch');
   const menuBox = () => ({ x: W - 46, y: 1, w: 16, h: 11 });
+  const menuHit = () => ({ x: W - 52, y: 0, w: 26, h: 18 });
   let paused = false;
   function openObjectives() {
     paused = true; keys.up = keys.down = keys.left = keys.right = false; moveTarget = null;
     const ok = (b) => (b ? '✓' : '○');
-    const hint = { loic: 'il aime la musique… cherche du côté d\'une salle de concert, au bord de la Vilaine', vero: 'elle prépare un voyage, sûrement à la fac de sciences éco', ioana: 'elle roule à vélo, loin, au-delà de la rocade' };
+    const hint = { loic: 'il aime la musique… cherche du côté d\'une salle de concert, au bord de la Vilaine', vero: 'elle prépare un voyage, sûrement à la fac de sciences éco', ioana: 'elle roule à vélo, loin, à Villejean (le métro y mène)' };
     const li = (done, text) => `<li class="${done ? 'done' : ''}">${ok(done)} ${text}</li>`;
     const noble = cats[0], um = cats[1];
     const html = [
-      '<h2>Objectifs</h2>', '<h3>L\'invitation</h3><ul>',
-      li(noble.solved && !noble.escaped, '{c1}, au Parc du Thabor'),
-      li(um.solved && !um.escaped, '{c2}, au sud de la Vilaine'),
+      '<h2>Objectifs</h2>', '<h3>Les deux chats de Ketsia</h3><ul>',
+      li(noble.solved && !noble.escaped, 'Le chat {c1}, au Parc du Thabor'),
+      li(um.solved && !um.escaped, 'Le chat {c2}, au sud de la Vilaine'),
       li(false, 'Le bar, au centre-ville : le rapporteur garde la porte (il faut les deux chats)'),
       `</ul><h3>Quête annexe : les encadrant·es (${supsFound()}/3)</h3><ul>`,
       ...SUPS.map((p) => li(p.found, p.found ? `${p.name} vient au bar` : `${p.name} : ${hint[p.key]}`)),
@@ -1556,11 +1649,12 @@
       li(hasBike, hasBike ? 'Vélo trouvé' : 'Une station de vélos se cache sur le campus'),
       li(otDone, hasBike ? 'Défi Monge : la station vide, au sud du Thabor' : 'Défi Monge : il faut d\'abord un vélo'),
       li((stats.tapas || 0) > 0, `Le pigeon voleur des tapas de ce soir, au centre-ville (sauvées : ${stats.tapas || 0} fois)`),
-      li((stats.metro || 0) > 0, `Le métro : 4 stations, dont une au-delà de la rocade (${stats.metro || 0} trajets)`),
-      li(climbDone, climbDone ? 'Secret trouvé : la tour des maths' : 'Un secret se cache sur le campus…'),
+      li((stats.metro || 0) > 0, `Le métro : il te mène jusqu'à Villejean (${stats.metro || 0} trajets)`),
+      li(storyNext >= STORIES.length, `Les bancs : assieds-toi un instant pour une histoire des maths (${Math.min(storyNext, STORIES.length)}/${STORIES.length})`),
+      li(climbDone, climbDone ? 'Secret trouvé : la tour des maths… et Colin' : 'Un secret se cache sur le campus… (indice : il faut lever les yeux)'),
       '</ul><h3>Commandes</h3><p>Flèches, ZQSD, ou toucher la carte pour marcher. Maj ou bouton B : avancer à pas de loup.',
-      ' Toucher un chat qui te suit (ou Espace) : une caresse. ✥ : croix directionnelle. ♪ : le son.</p>',
-    ].join('');
+      ' Toucher un chat qui te suit (ou Espace) : une caresse. ✥ : croix directionnelle. ♪ : le son et la musique.</p>',
+    ].join('') + (store.get('invite-err') ? `<p class="small">Petit bug technique noté (le jeu a continué). Si tu veux aider, envoie une capture de cette ligne : <code>${escHtml(store.get('invite-err'))}</code></p>` : '');
     // Built from the game's own strings; the cats' names come from the link, so they are escaped.
     $('objBody').innerHTML = html.replace(/\{c1\}/g, escHtml(CAT1)).replace(/\{c2\}/g, escHtml(CAT2));
     $('objBox').classList.remove('hidden');
@@ -1570,20 +1664,24 @@
   function drawHud(cam) {
     const ob = objective();
     ctx.textAlign = 'left'; ctx.font = `bold 7px ${FONT}`;
-    const hl = wrap(N(ob.text), W - 54);
+    const touch = touchUI();
+    const hl = wrap(N(ob.text), W - (touch ? 60 : 54));
     const hudH = 5 + hl.length * 8;
     ctx.fillStyle = 'rgba(20,16,32,.78)'; ctx.fillRect(0, 0, W, hudH);
     ctx.fillStyle = '#f4ead5';
     hl.forEach((l, i) => ctx.fillText(l, 4, 9 + i * 8));
-    const mb = menuBox(); // the objectives button
-    ctx.fillStyle = 'rgba(242,193,75,.25)'; ctx.fillRect(mb.x, mb.y, mb.w, mb.h);
-    ctx.strokeStyle = '#f2c14b'; ctx.lineWidth = 0.8; ctx.strokeRect(mb.x + 0.4, mb.y + 0.4, mb.w - 0.8, mb.h - 0.8);
-    centered('☰', mb.x + mb.w / 2, mb.y + mb.h / 2, '#f4ead5', 8);
-    for (let i = 0; i < 2; i++) {
-      const x = W - 22 + i * 10, y = 6.5;
-      ctx.fillStyle = i < fragments() ? '#f2c14b' : '#4a4560';
-      ctx.beginPath(); ctx.moveTo(x, y - 4); ctx.lineTo(x + 4, y); ctx.lineTo(x, y + 4); ctx.lineTo(x - 4, y); ctx.fill();
+    if (!touch) {
+      const mb = menuBox(); // the objectives button
+      ctx.fillStyle = 'rgba(242,193,75,.25)'; ctx.fillRect(mb.x, mb.y, mb.w, mb.h);
+      ctx.strokeStyle = '#f2c14b'; ctx.lineWidth = 0.8; ctx.strokeRect(mb.x + 0.4, mb.y + 0.4, mb.w - 0.8, mb.h - 0.8);
+      centered('☰', mb.x + mb.w / 2, mb.y + mb.h / 2, '#f4ead5', 8);
     }
+    const hx = touch ? W - 54 : W - 25; // the cats' heads: lit once the cat follows you
+    [[cats[0], HEAD1], [cats[1], HEAD2]].forEach(([c, img], i) => {
+      ctx.globalAlpha = c.solved && !c.escaped ? 1 : 0.4;
+      ctx.drawImage(img, hx + i * 11, 2);
+      ctx.globalAlpha = 1;
+    });
     {
       const parts = [`encadrant·es ${supsFound()}/3`];
       if (keys.sneak) parts.push('à pas de loup…'); else if (hasBike) parts.push('vélo');
@@ -1681,6 +1779,13 @@
     '...SSSSnnSSSS...', '....SSSmmSSS....', '.....SSSSSS.....', '...TTTTTTTTTT...', '..TTTTTTTTTTTT..',
     '..TTTTTTTTTTTT..', '..STTTTTTTTTTS..', '...TTTTTTTTTT...', '...PPPP..PPPP...', '...PPPP..PPPP...', '...KKKK..KKKK...'],
   { k: '#1e1a22', h: '#2b2340', S: '#e8b896', B: '#2e86c1', n: '#d9a083', m: '#a8605a', T: '#1abc9c', P: '#2c3a5e', K: '#1e1a22' });
+  // Colin: same build as the guests (short brown hair, blue hoodie).
+  const COLIN = makeSprite(GUEST_ROWS, { h: '#5a3a22', S: '#f0c3a5', e: '#2b2340', n: '#d9a083', m: '#a8605a', T: '#2e86c1', P: '#3a3f4a', K: '#1e1a22' });
+  // Cabbage heads ("têtes de chou"), partying at the bar.
+  const CHOU_ROWS = ['.....lLLLLl.....', '...lLLlLLlLLl...', '..lLlLLLLLLlLl..', '..LLLeLLLLeLLL..', '..lLLLLLLLLLLl..',
+    '..LlLLLmmLLLlL..', '...lLLLLLLLLl...', '.....lLLLLl.....', ...GUEST_ROWS.slice(8)];
+  const CHOUX = ['#e84393', '#f39c12', '#3498db'].map((T) => makeSprite(CHOU_ROWS,
+    { L: '#8fd67a', l: '#4f9a45', e: '#1e1a22', m: '#a8605a', T, S: '#8fd67a', P: '#2c3a5e', K: '#1e1a22' }));
   const BARTENDER = makeSprite(GUEST_ROWS, { h: '#3a2618', S: '#f0c3a5', e: '#2b2340', n: '#d9a083', m: '#a8605a', T: '#fdf6e3', P: '#2c3a5e', K: '#1e1a22' });
   function drawBar() {
     const t = time, floorY = Math.round(H * 0.56);
@@ -1712,18 +1817,30 @@
     textShadow('tapas', W - 33, floorY + 2, '#fdf6e3', 6);
     // Everyone dances: guests, the found supervisors, the cats, Ketsia in the middle.
     const perRow = Math.max(5, Math.floor(W / 30));
-    const back = GUESTS.slice(0, perRow);
-    const middle = [GUESTS[8], NOBLECAT[0], KS.d[0], flipH(BIGCAT[0]), GUESTS[9]];
-    const front = [GUESTS[10], ...SUPS.filter((p) => p.found && p.key !== 'ioana').map((p) => p.img), GUESTS[11], GUESTS[12], GUESTS[13]].slice(0, perRow);
+    const back = GUESTS.slice(0, perRow).map((g, k) => (k === 1 ? CHOUX[0] : k === 4 ? CHOUX[1] : g));
+    const middle = [GUESTS[8], NOBLECAT[0], KS.d[0], ...(climbDone ? [COLIN] : []), BIGCAT_L, GUESTS[9]];
+    const front = [GUESTS[10], ...SUPS.filter((p) => p.found && p.key !== 'ioana').map((p) => p.img), CHOUX[2], GUESTS[12], GUESTS[13]].slice(0, perRow);
     const rows = portrait ? [[back, floorY + 18], [middle, floorY + 44], [front, floorY + 72], [GUESTS.slice(4, 4 + perRow), floorY + 100]]
       : [[back, floorY + 16], [middle, floorY + 40], [front, floorY + 64]];
     rows.forEach(([row, y], r) => {
       row.forEach((img, k) => {
         const x = Math.round((W / (row.length + 1)) * (k + 1) - img.width / 2);
         const ph = k * 1.3 + r * 0.7, fl = Math.floor(t * 2 + ph) % 2;
-        ctx.drawImage(fl ? flipped(img) : img, x, Math.round(y - img.height + bob(ph)));
+        const top = Math.round(y - img.height + bob(CHOUX.includes(img) ? ph * 2 : ph, CHOUX.includes(img) ? 5 : 3));
+        ctx.drawImage(fl ? flipped(img) : img, x, top);
+        if (CHOUX.includes(img)) { // party hat
+          const hx = x + 8; ctx.fillStyle = ['#f2c14b', '#e2505e', '#7fb3e0'][CHOUX.indexOf(img)];
+          ctx.beginPath(); ctx.moveTo(hx - 3, top + 1); ctx.lineTo(hx + 3, top + 1); ctx.lineTo(hx, top - 6); ctx.fill();
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(hx - 0.5, top - 7, 1.5, 1.5);
+        }
+        if (img === COLIN) textShadow('♥', x + 8, top - 2 + Math.sin(t * 3) * 1.2, '#ff6b9a', 8);
       });
     });
+    for (let k = 0; k < 28; k++) { // confetti
+      const cx = (k * 47 + Math.sin(t + k) * 8) % W, cy = (t * (14 + k % 5 * 3) + k * 29) % (H - 34) + 34;
+      ctx.fillStyle = ['#f2c14b', '#e9a3a6', '#7fb3e0', '#8fd67a', '#c38fd6'][k % 5];
+      ctx.fillRect(Math.round(cx), Math.round(cy), 1 + (Math.floor(t * 4 + k) % 2), 1);
+    }
     if (SUPS[2].found) { // Ioana does laps of the dance floor on her bike
       const ix = W / 2 + Math.sin(t * 0.9) * W * 0.36, img = Math.cos(t * 0.9) < 0 ? flipped(IOANA) : IOANA;
       ctx.drawImage(img, Math.round(ix - 13), Math.round(floorY + (portrait ? 124 : 78) - 22));
@@ -1759,7 +1876,7 @@
     if (!stats.played || state === 'end' || state === 'name') return;
     store.set(SAVE_KEY, JSON.stringify({
       v: 1, name: playerName, mode: extreme ? 'extreme' : hard ? 'hard' : 'normal', at: Date.now(),
-      px: player.x, py: player.y, cp: checkpoint, solvedCount, hasBike, otDone, climbDone, rapStage,
+      px: player.x, py: player.y, cp: checkpoint, solvedCount, hasBike, otDone, climbDone, rapStage, storyNext,
       carry: puzzle && puzzle.wonT < 0 ? { ...carry, [puzzle.label]: { wrong: puzzle.wrong, hints: puzzle.hints } } : carry,
       cats: cats.map((c) => ({ solved: c.solved, escaped: !!c.escaped, order: c.order, x: c.x, y: c.y, spot: c.spot || 0, fled: c.fled || 0 })),
       sups: SUPS.map((p) => p.found), stats: { ...stats, elapsed: Date.now() - stats.start },
@@ -1771,10 +1888,10 @@
     trafficMul = extreme ? 1.9 : hard ? 1.3 : 1;
     player.x = sv.px; player.y = sv.py; checkpoint = sv.cp;
     sv.cats.forEach((c, i) => Object.assign(cats[i], c, { run: null, wait: false }));
-    ({ solvedCount, hasBike, otDone, climbDone } = sv); carry = sv.carry || {}; rapStage = sv.rapStage || 0;
+    ({ solvedCount, hasBike, otDone, climbDone } = sv); carry = sv.carry || {}; rapStage = sv.rapStage || 0; storyNext = sv.storyNext || 0;
     SUPS.forEach((p, i) => { p.found = !!sv.sups[i]; });
     Object.assign(stats, sv.stats); stats.start = Date.now() - (sv.stats.elapsed || 0); delete stats.elapsed;
-    for (const c of following()) { c.x = player.x; c.y = player.y; }
+    for (const c of [...following(), colin]) { c.x = player.x; c.y = player.y; }
     if (extreme) { ghost.on = true; ghostHome(); }
     trail = []; state = 'play';
     $('nameBox').classList.add('hidden'); setTimeout(layout, 50);
@@ -1822,7 +1939,7 @@
     const badges = [];
     if (supsFound() === 3) badges.push('Réunion d\'encadrement au complet : Loïc, Ioana et Véronique seront au bar.');
     if ((stats.tapas || 0) > 0) badges.push(`Tu as sauvé ${stats.tapas > 1 ? `${stats.tapas} fois` : 'une fois'} les tapas de ce soir des griffes du pigeon voleur.`);
-    if (climbDone) badges.push('Badge secret : tu as grimpé la tour des maths.');
+    if (climbDone) badges.push('Badge secret : tu as grimpé la tour des maths, et Colin est descendu avec toi.');
     if (otDone) badges.push('Badge Monge-Kantorovich : tu as rééquilibré les vélos de Rennes au moindre coût.');
     if (extreme && fragments() === 2) badges.push('Survivant·e du mode EXTRÊME DE LA MORT QUI TUE. Respect éternel.');
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
@@ -1831,11 +1948,11 @@
       const dip = finalDip || diploma();
       $('cPdf').classList.remove('hidden');
       $('cPdf').onclick = (e) => { e.preventDefault(); downloadPdf(dip); };
-      $('cScore').textContent = `Ton score : ${dip.score} points · mention ${dip.mention}. Ton diplôme t'attend en PDF : montre-le au bar !`;
+      $('cScore').textContent = `Ton score : ${dip.score} points, mention ${dip.mention}. Ton diplôme t'attend en PDF : montre-le au bar !`;
       $('cScore').classList.remove('hidden');
       const bi = badgeInfo(dip);
       $('cBadgeImg').src = badgeCanvas(dip).toDataURL('image/png');
-      $('cBadgeTxt').textContent = `Ton badge : ${bi.order}, rang ${bi.rankName} · code ${bi.code}. Au bar, cherche celles et ceux qui ont le même !`;
+      $('cBadgeTxt').textContent = `Ton badge : ${bi.order}, niveau ${bi.rankName}. Sa forme dépend du mode de jeu, sa couleur de ton score, ses pierres des encadrant·es croisé·es. Au bar, cherche celles et ceux qui ont le même !`;
       $('cBadgeBox').classList.remove('hidden');
     }
     if (INV.m) { $('cMsg').textContent = INV.m; $('cMsg').classList.remove('hidden'); }
@@ -1850,7 +1967,7 @@
     x.fillStyle = 'rgba(20,16,32,.35)'; x.fillRect(0, 0, 480, 300);
     const crew = [];
     SUPS.filter((p) => p.found).forEach((p) => crew.push(p.img));
-    crew.splice(Math.floor(crew.length / 2), 0, NOBLECAT[0], KS.d[0], flipH(BIGCAT[0]));
+    crew.splice(Math.floor(crew.length / 2), 0, NOBLECAT[0], KS.d[0], ...(climbDone ? [COLIN] : []), BIGCAT_L);
     const sc = crew.length > 4 ? 3 : 4, gap = crew.length > 4 ? 6 : 10, wsum = crew.reduce((s2, im) => s2 + im.width * sc + gap, -gap);
     let px = Math.round((480 - wsum) / 2);
     for (const im of crew) { x.drawImage(im, px, 230 - im.height * sc, im.width * sc, im.height * sc); px += im.width * sc + gap; }
@@ -1901,7 +2018,7 @@
       : ratio >= 0.8 ? 'très honorable' : ratio >= 0.6 ? 'honorable' : 'passable (le jury a été clément)';
     const rank = ratio >= 0.95 ? 3 : ratio >= 0.8 ? 2 : ratio >= 0.6 ? 1 : 0;
     const d = {
-      rank, supsWho: SUPS.map((p) => p.found), climb: climbDone,
+      rank, supsWho: SUPS.map((p) => p.found), climb: climbDone, stories: Math.min(storyNext, STORIES.length),
       name: playerName, hard, extreme, pets: stats.pets, petBonus, metro: stats.metro, sups, tapas, ghost: stats.ghost || 0, met: [...stats.met], god: !!stats.god, seconds: Math.round((stats.end - stats.start) / 1000), meters: Math.round(stats.dist / T * 10),
       hits: stats.hits, flees, bike: hasBike, bonus: otDone, puzzles, penalty, score, mention,
       date: new Date(stats.end).toISOString(),
@@ -1913,7 +2030,7 @@
   }
 
   /* ----- the badge: same play profile, same badge, so friends find each other at the bar ----- */
-  const RANKS = [['Bronze', '#c07a3a'], ['Argent', '#c3c8d0'], ['Or', '#f2c14b'], ['Félicitations', '#9b59b6']];
+  const RANKS = [['Bronze', '#c07a3a'], ['Argent', '#c3c8d0'], ['Or', '#f2c14b'], ['Diamant', '#9b59b6']];
   const ORDERS = { normal: 'Ordre du Graphe', hard: 'Ordre du Pas de Loup', extreme: 'Ordre du Reviewer 2' };
   function badgeInfo(d) {
     const mode = d.extreme ? 'extreme' : d.hard ? 'hard' : 'normal';
@@ -2002,7 +2119,7 @@
     const bi = badgeInfo(d);
     sprite(badgeCanvas(d), 452, 690, 3);
     text(bi.order, 500, 680, 7.5, true, '#2b2340', 'center');
-    text(`rang ${bi.rankName}`, 500, 671, 7.5, false, '#2b2340', 'center');
+    text(`niveau ${bi.rankName}`, 500, 671, 7.5, false, '#2b2340', 'center');
     text(`badge ${bi.code}`, 500, 662, 7, false, '#6b6580', 'center');
     text(`Mention ${d.mention}`, 297, 536, 14, true, '#2c6a42', 'center');
     text(`${d.score} points`, 297, 504, 26, true, '#2b2340', 'center');
@@ -2017,6 +2134,7 @@
       ['Caresses aux chats', `${d.pets || 0}${d.petBonus ? ` · +${d.petBonus} pts` : ''}`],
       ['Encadrant·es retrouvé·es', `${d.sups || 0} / 3${d.sups ? ` · +${150 * d.sups} pts` : ''}`],
       ['Tapas sauvées du pigeon', `${d.tapas || 0} fois`],
+      ['Histoires des maths écoutées sur un banc', `${d.stories || 0} / ${STORIES.length}`],
       ...(d.god ? [['Mode dieu (développeur)', 'oui, tricheur·se']] : []),
     ];
     if (d.extreme) rows.push(['Visites du Reviewer 2', String(d.ghost || 0)]);
@@ -2039,6 +2157,7 @@
       cat1: [NOBLECAT[0], '{c1}'], cat2: [BIGCAT[0], '{c2}'], loic: [LOIC, 'Loïc'], vero: [VERO, 'Véronique'],
       ioana: [IOANA, 'Ioana'], pigeon: [PIGEON[0], 'Pigeon'], bike: [BIKE_SIDE, 'Vélo'], metro: [METRO_ICON, 'Métro'],
       climb: [CLIMB_ICON, 'Escalade'], ghost: [GHOST, 'Reviewer 2'], rap: [RAP, 'Rapporteur'], ot: [tileCanvas('v'), 'Monge'],
+      colin: [COLIN, 'Colin'], bench: [tileCanvas('n'), 'Banc'],
     };
     const met = (d.met || []).filter((k) => ICONS[k]);
     text('Rencontres du voyage', 297, 206, 10, true, '#2b2340', 'center');
@@ -2129,9 +2248,14 @@
       l.textContent = `Reprendre ma partie en cours (${sv.name}, ${sv.mode === 'extreme' ? 'EXTRÊME' : sv.mode === 'hard' ? 'difficile' : 'normal'})`;
       l.classList.remove('hidden');
       l.addEventListener('click', (e) => { e.preventDefault(); setSound($('soundOn').checked, true); resume(sv); });
+      let auto = false;
+      try { auto = sessionStorage.getItem('invite-autoresume') === '1'; sessionStorage.removeItem('invite-autoresume'); } catch (e) { /* ignore */ }
+      if (auto) resume(sv);
     }
   }
   $('skipLink').addEventListener('click', (e) => { e.preventDefault(); takeName(); showCard(); });
+  $('pitchCats').textContent = `${CAT1} et ${CAT2}`;
+  $('menuBtn').addEventListener('click', () => { if (state === 'play' && !paused) openObjectives(); });
 
   /* ================= input ================= */
   const KEYMAP = { ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', ArrowLeft: 'left', KeyA: 'left',
@@ -2144,7 +2268,8 @@
     SUPS.forEach((p) => { p.found = true; });
     hasBike = true; otDone = true; climbDone = true;
     stats.tapas = Math.max(1, stats.tapas || 0); stats.metro = Math.max(1, stats.metro || 0); stats.pets = Math.max(3, stats.pets);
-    ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'ot', 'rap'].concat(extreme ? ['ghost'] : []).forEach(meet);
+    storyNext = Math.max(storyNext, STORIES.length);
+    ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'colin', 'bench', 'ot', 'rap'].concat(extreme ? ['ghost'] : []).forEach(meet);
     const labels = ['{c1} · partitionnement', '{c2} · Gromov-Wasserstein', 'Bonus · transport optimal', 'Easter egg · escalade', 'Rapporteur · anomalie']
       .concat(extreme ? ['Rapporteur · question 2', 'Rapporteur · question 3'] : []);
     for (const label of labels.map(N)) if (!stats.puzzles.some((p) => p.label === label)) stats.puzzles.push({ label, time: 30, wrong: 0, hints: 0, skipped: false });
@@ -2202,7 +2327,7 @@
     if (state === 'metroMenu') { metroTap(x, y); return; }
     if (state === 'end' && !cardShown) { revealCard(); return; }
     if (state === 'play') {
-      if (inBox(menuBox(), x, y)) { openObjectives(); return; }
+      if (!touchUI() && inBox(menuHit(), x, y)) { openObjectives(); return; }
       const wx = x + lastCam.cx, wy = y + lastCam.cy;
       if (Math.hypot(wx - player.x, wy - (player.y - 8)) < 12) {
         const now = performance.now();
@@ -2268,13 +2393,44 @@
   let last = performance.now();
   if (store.get('invite-pad') === 'on') document.documentElement.classList.add('showpad');
   let wasPlaying = null;
+  // An error in one frame must never kill the game (a dead loop looks like a frozen or black screen).
+  // It is logged, shown in the objectives panel for beta testers, and after a few in a row the game
+  // drops whatever overlay broke and goes back to walking.
+  const TEST = new URLSearchParams(location.search).has('test');
+  let errRun = 0;
+  function recover(e) {
+    if (TEST) setTimeout(() => { throw e; }); // the e2e run must still fail on it
+    try { console.error(e); store.set('invite-err', `${state} · ${String((e && e.stack) || e).split('\n').slice(0, 2).join(' ').slice(0, 240)}`); } catch (_) { /* ignore */ }
+    if (++errRun < 3) return;
+    errRun = 0; dlg = null; puzzle = null; metro = null; paused = false; $('objBox').classList.add('hidden');
+    if (state !== 'end') state = 'play';
+  }
   function loop(now) {
+    requestAnimationFrame(loop); // scheduled first, so nothing below can stop the loop
     const dt = clamp((now - last) / 1000, 0, 0.05); last = now;
-    if ((state === 'play') !== wasPlaying) { wasPlaying = state === 'play'; document.documentElement.classList.toggle('playing', wasPlaying); }
-    update(dt); render();
-    requestAnimationFrame(loop);
+    try {
+      if ((state === 'play') !== wasPlaying) { wasPlaying = state === 'play'; document.documentElement.classList.toggle('playing', wasPlaying); }
+      update(dt); render(); musicTick();
+      errRun = 0;
+    } catch (e) { recover(e); }
   }
   requestAnimationFrame(loop);
+  // Phones may drop the pictures of a canvas while the tab sits in the background: the map and the
+  // sprites come back blank (a black screen where Ketsia still moves). The game is saved when
+  // hidden, so if that happened, reload and pick the run up where it was.
+  function picturesLost() {
+    try {
+      return world.getContext('2d').getImageData(1, 1, 1, 1).data[3] === 0 || KS.d[0].getContext('2d').getImageData(8, 6, 1, 1).data[3] === 0;
+    } catch (e) { return false; }
+  }
+  function checkPictures() {
+    if (document.visibilityState !== 'visible' || !stats.played || state === 'end' || state === 'name' || !picturesLost()) return;
+    snapshot();
+    try { sessionStorage.setItem('invite-autoresume', '1'); } catch (e) { /* ignore */ }
+    location.reload();
+  }
+  document.addEventListener('visibilitychange', () => setTimeout(checkPictures, 300));
+  window.addEventListener('pageshow', () => setTimeout(checkPictures, 300));
 
   // Test hook: lets an automated check drive the game without a human.
   function art(kind) { // link-preview image (1200x630) and tab icon (64x64), generated from the game's own sprites
@@ -2297,7 +2453,7 @@
     return c.toDataURL('image/png');
   }
   if (new URLSearchParams(location.search).has('test')) window.__invite = {
-    art, snapshot, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
+    art, snapshot, BENCHES, colin, world, get storyNext() { return storyNext; }, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
     get state() { return state; }, get hasBike() { return hasBike; }, get otDone() { return otDone; },
     player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
   };

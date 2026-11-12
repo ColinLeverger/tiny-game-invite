@@ -93,9 +93,40 @@ async function play(browser, tag, opts, mode) {
     check(await ev(() => __invite.fragments) === 1, `${tag}: ghost catch did not free a cat`);
     const i = await ev(() => __invite.cats.findIndex((c) => c.escaped));
     await ev(() => { __invite.ghost.on = false; __invite.keys.sneak = true; });
+    // The freed cat may have respawned near the ghost's spot and be running away: catch it once it stops.
+    await p.waitForFunction((k) => !__invite.cats[k].run, i, { timeout: 15000 });
     await visitCat(i, 14, 1); await drain();
     await ev(() => { __invite.keys.sneak = false; });
     check(await ev(() => __invite.fragments) === 2, `${tag}: escaped cat not re-caught`);
+  }
+
+  // Objectives: the big HTML button on a phone, the HUD button on a laptop; both open the panel.
+  if (opts.hasTouch) await p.click('#menuBtn');
+  else { const W = await ev(() => __invite.W); await tapScreen(W - 38, 6); }
+  await p.waitForSelector('#objBox:not(.hidden)', { timeout: 3000 });
+  await p.click('#objClose');
+
+  // A bench: stop on it for a moment, hear a story.
+  await place(() => { const b = __invite.BENCHES[1]; __invite.player.x = b.x; __invite.player.y = b.y; });
+  await p.waitForFunction(() => __invite.state === 'dialog' && __invite.storyNext === 1, null, { timeout: 3000 });
+  await drain();
+
+  // The climbing wall: Colin comes down with Ketsia and follows her.
+  await place(() => { __invite.player.x = __invite.WALL.x; __invite.player.y = __invite.WALL.y; __invite.keys.up = true; });
+  await p.waitForFunction(() => __invite.state !== 'play', null, { timeout: 3000 });
+  await ev(() => { __invite.keys.up = false; }); await drain(); await winByHook();
+  check(await ev(() => __invite.climbDone && __invite.stats.met.includes('colin')), `${tag}: Colin did not join after the climb`);
+
+  // Phones can blank a canvas's pictures while the tab is hidden: the game must reload and resume the run.
+  if (!opts.hasTouch) {
+    const before = await ev(() => [Math.round(__invite.player.x), Math.round(__invite.player.y), __invite.fragments]);
+    await Promise.all([
+      p.waitForEvent('load', { timeout: 5000 }),
+      ev(() => { __invite.world.getContext('2d').clearRect(0, 0, 4, 4); document.dispatchEvent(new Event('visibilitychange')); }),
+    ]);
+    await p.waitForFunction(() => window.__invite && __invite.state === 'play', null, { timeout: 5000 });
+    const after = await ev(() => [Math.round(__invite.player.x), Math.round(__invite.player.y), __invite.fragments]);
+    check(after.join() === before.join(), `${tag}: run not resumed after lost pictures: ${before} -> ${after}`);
   }
 
   // Rapporteur: tap the anomalous trajectory; in extreme mode quit at question 2, come back, finish the exam.
@@ -142,6 +173,10 @@ async function robustness(browser) {
   check(await p.isChecked('#soundOn'), 'robustness: sound preference overwritten on load');
   await p.fill('#nameInput', 'Iris'); await p.click('button[type=submit]');
   await p.waitForFunction(() => window.__invite && __invite.state === 'dialog');
+  // "No time to play": the big button on the first screen goes straight to the invitation.
+  await p.reload();
+  await p.click('#skipLink');
+  await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 });
   check(errors.length === 0, `robustness: page errors with a malformed link: ${errors.join(' | ')}`);
   await p.close();
   console.log('e2e robustness: OK');

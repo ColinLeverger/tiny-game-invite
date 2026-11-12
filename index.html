@@ -65,7 +65,7 @@
          padding: 20px; width: min(100%, 460px); margin: auto; }
   .box h1 { font-size: 20px; margin: 0 0 14px; line-height: 1.3; }
   .box label { display: block; font-weight: bold; margin-bottom: 8px; }
-  .box input:not([type=radio]) { width: 100%; font: 18px monospace; padding: 8px; border: 3px solid var(--ink); background: #fff; color: var(--ink); }
+  .box input:not([type=radio]):not([type=checkbox]) { width: 100%; font: 18px monospace; padding: 8px; border: 3px solid var(--ink); background: #fff; color: var(--ink); }
   .btn { display: inline-block; margin-top: 12px; font: bold 16px monospace; padding: 10px 14px; border: 3px solid var(--ink);
          background: var(--gold); color: var(--ink); cursor: pointer; text-decoration: none; box-shadow: 3px 3px 0 var(--ink); }
   .btn.alt { background: #fff; }
@@ -77,6 +77,14 @@
   #card .big { font-size: 18px; font-weight: bold; }
   #card .sig { font-style: italic; }
   .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pitch { margin: -4px 0 12px; line-height: 1.4; }
+  #skipLink { background: #e9a3a6; }
+  /* Touch: the objectives button is a real button, big, in the top-right corner. */
+  #menuBtn { display: none; position: fixed; z-index: 6; top: calc(6px + env(safe-area-inset-top, 0px));
+             right: calc(6px + env(safe-area-inset-right, 0px)); width: 46px; height: 40px; border-radius: 8px;
+             border: 2px solid rgba(242, 193, 75, .9); background: rgba(22, 19, 31, .55); color: #fdf6e3; font: bold 22px monospace;
+             touch-action: manipulation; }
+  .touch.playing #menuBtn { display: block; }
 </style>
 </head>
 <body>
@@ -95,11 +103,13 @@
       <button class="abtn big" data-k="act">A</button>
     </div>
   </div>
+  <button id="menuBtn" type="button" aria-label="Objectifs et options">☰</button>
 </main>
 
 <div id="nameBox" class="overlay">
   <form class="box" id="nameForm">
     <h1>Une invitation t'attend…</h1>
+    <p class="pitch">Aide Ketsia à retrouver ses deux chats, <b id="pitchCats">Chat noble et Gros chat</b>, dans Rennes… et découvre où l'on fête sa thèse.</p>
     <label for="nameInput">Comment t'appelles-tu ?</label>
     <input id="nameInput" maxlength="24" autocomplete="given-name" required>
     <fieldset class="modes">
@@ -108,11 +118,13 @@
       <label><input type="radio" name="mode" value="hard"> Difficile</label>
       <label><input type="radio" name="mode" value="extreme"> EXTRÊME DE LA MORT QUI TUE</label>
     </fieldset>
-    <label class="snd"><input type="checkbox" id="soundOn"> Activer le son (bruitages 8-bit)</label>
-    <button class="btn" type="submit">C'est parti ▸</button>
+    <label class="snd"><input type="checkbox" id="soundOn"> Activer le son (musique et bruitages 8-bit)</label>
+    <div class="btns">
+      <button class="btn" type="submit">C'est parti ▸</button>
+      <button class="btn" type="button" id="skipLink">J'ai pas le temps : vite, l'invite ! ▸</button>
+    </div>
     <p class="small">Flèches ou ZQSD pour bouger, Espace pour continuer. Sur téléphone : touche la carte, Ketsia y va ; laisse le doigt appuyé pour la guider.<br>
       <a href="#" id="resumeLink" class="hidden"></a><br>
-      <a href="#" id="skipLink">Pas le temps de jouer ? Voir directement l'invitation</a><br>
       <a href="#" id="lastPdf" class="hidden">Retélécharger mon dernier diplôme (PDF)</a></p>
   </form>
 </div>
