@@ -27,6 +27,8 @@ Le jeu marche sur téléphone, en portrait comme en paysage, et sur ordinateur a
   nageoires, une bouteille de cidre, un vélo, le chapitre 3 de sa thèse… Poulpy le poulpe tire sur la ligne pour
   raconter des blagues.
 - Trois modes : Normal, Difficile, et un troisième dont on garde la surprise.
+  À partir de Difficile, les quatre défis mathématiques sont plus riches (plus de carrefours, de quartiers,
+  de trajets ou de vélos), toujours avec l'aide pas à pas.
 - Chaque puzzle a trois boutons : Quitter (ou Échap), Aide (guidage pas à pas) et Valider (après 15 s).
 - Il y a aussi un easter egg, que ce README ne dévoile pas.
 - À la fin : la carte d'invitation, un fichier agenda (.ics) et un diplôme PDF du score

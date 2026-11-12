@@ -905,7 +905,7 @@
   }
 
   /* ================= puzzles ================= */
-  const PCOL = ['#e07a5f', '#81b29a', '#f2cc8f', '#7fb3e0', '#c38fd6'];
+  const PCOL = ['#e07a5f', '#81b29a', '#f2cc8f', '#7fb3e0', '#c38fd6', '#e8e86a'];
   let carry = {}; // errors and hints of a puzzle that was quit, so quitting does not wipe them
   function startPuzzle(p, done, onQuit) {
     p.title = N(p.title); p.label = N(p.label); p.help = p.help.map(N);
@@ -922,8 +922,9 @@
   }
   // Puzzles are laid out in landscape coordinates (x 30..290, y 36..158). In portrait the
   // layout is transposed into the tall screen; only positions move, text stays upright.
-  let pmap = { ox: 0, oy: 0, sx: 1, sy: 1 };
-  const PM = (x, y) => (portrait ? [pmap.ox + (y - 36) * pmap.sx, pmap.oy + (x - 30) * pmap.sy] : [x + (W - 320) / 2, y]);
+  let pmap = { ox: 0, oy: 0, sx: 1, sy: 1, ly: 0 };
+  // ly: in landscape, the drawing moves down a little when the title and help take more room (a long cat name).
+  const PM = (x, y) => (portrait ? [pmap.ox + (y - 36) * pmap.sx, pmap.oy + (x - 30) * pmap.sy] : [x + (W - 320) / 2, y + pmap.ly]);
   function hitNode(nodes, x, y, r = 12) {
     let best = -1, bd = r;
     nodes.forEach(([nx, ny], i) => { const [mx, my] = PM(nx, ny); const d = Math.hypot(mx - x, my - y); if (d < bd) { bd = d; best = i; } });
@@ -963,20 +964,29 @@
   const perms = (a) => (a.length <= 1 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map((p) => [x, ...p])));
 
   // 1. the noble cat: graph partitioning into 3 districts with minimum cut.
+  // Hard and extreme modes: 12 crossroads, 4 districts of unequal sizes (4, 3, 3, 2), no tidy triangles.
+  // Checked by brute force over all 4^12 colourings: the intended districts are the only optimum (5 cuts).
   function makePartition() {
-    const nodes = [[60, 74], [102, 54], [90, 116], [152, 64], [192, 48], [178, 102], [232, 124], [274, 94], [262, 146]];
-    const edges = [[0, 1], [1, 2], [0, 2], [3, 4], [4, 5], [3, 5], [6, 7], [7, 8], [6, 8], [1, 3], [5, 7], [2, 6]];
-    const CLUSTER = [0, 0, 0, 1, 1, 1, 2, 2, 2];
+    const H = hard;
+    const nodes = H ? [[50, 56], [110, 66], [172, 54], [238, 58], [60, 112], [118, 120], [205, 100], [282, 76], [205, 152], [150, 104], [255, 152], [285, 130]]
+      : [[60, 74], [102, 54], [90, 116], [152, 64], [192, 48], [178, 102], [232, 124], [274, 94], [262, 146]];
+    const edges = H ? [[0, 1], [0, 4], [1, 4], [1, 5], [4, 5], [2, 6], [2, 3], [3, 6], [8, 9], [9, 10], [8, 10], [7, 11], [1, 2], [5, 9], [6, 7], [10, 11], [3, 11]]
+      : [[0, 1], [1, 2], [0, 2], [3, 4], [4, 5], [3, 5], [6, 7], [7, 8], [6, 8], [1, 3], [5, 7], [2, 6]];
+    const CLUSTER = H ? [0, 0, 1, 1, 0, 0, 1, 3, 2, 2, 2, 3] : [0, 0, 0, 1, 1, 1, 2, 2, 2];
+    const K = H ? 4 : 3; // number of districts
     const col = nodes.map(() => -1);
     const cut = (a) => edges.filter(([u, v]) => a[u] !== a[v]).length;
-    const sizesOk = (a) => { const c = [0, 0, 0]; a.forEach((k) => k >= 0 && c[k]++); return c.every((n) => n >= 2); };
-    let best = 99; const a = Array(9).fill(0);
-    for (let code = 0; code < 19683; code++) {
-      let c = code; for (let i = 0; i < 9; i++) { a[i] = c % 3; c = (c / 3) | 0; }
-      if (sizesOk(a)) best = Math.min(best, cut(a));
+    const sizesOk = (a) => { const c = Array(K).fill(0); a.forEach((k) => k >= 0 && c[k]++); return c.every((n) => n >= 2); };
+    let best = cut(CLUSTER);
+    if (!H) { // small enough to check every colouring here
+      const a = Array(9).fill(0);
+      for (let code = 0; code < 19683; code++) {
+        let c = code; for (let i = 0; i < 9; i++) { a[i] = c % 3; c = (c / 3) | 0; }
+        if (sizesOk(a)) best = Math.min(best, cut(a));
+      }
     }
     const guide = () => { // keep the colours the player already chose, fix the rest
-      const pm = perms([0, 1, 2]).reduce((b, p) => {
+      const pm = perms([...Array(K).keys()]).reduce((b, p) => {
         const s = col.filter((k, i) => k === p[CLUSTER[i]]).length; return s > b.s ? { p, s } : b;
       }, { p: [0, 1, 2], s: -1 }).p;
       const i = col.findIndex((k, n) => k !== pm[CLUSTER[n]]);
@@ -984,7 +994,9 @@
     };
     return {
       title: '{c1} · Partitionnement', label: '{c1} · partitionnement',
-      help: ['Touche un rond pour changer sa couleur : 3 quartiers, au moins 2 carrefours chacun.', 'But : le moins de routes possible entre deux couleurs différentes.'],
+      nodes, cluster: CLUSTER, // read by the e2e test
+      help: H ? ['Touche un rond pour changer sa couleur : 4 quartiers.', 'Au moins 2 carrefours chacun. But : couper le moins de routes.']
+        : ['Touche un rond pour changer sa couleur : 3 quartiers, au moins 2 carrefours chacun.', 'But : le moins de routes possible entre deux couleurs différentes.'],
       draw() {
         for (const [u, v] of edges) {
           const [x1, y1] = nodes[u], [x2, y2] = nodes[v];
@@ -996,7 +1008,8 @@
         if (this.guided) {
           const g = guide();
           if (g) blink(...nodes[g.i], 11, PCOL[g.target]);
-          this.guideText = 'Aide : chaque triangle forme un quartier. Touche le rond qui clignote jusqu\'à ce qu\'il prenne la couleur de l\'anneau.';
+          this.guideText = H ? 'Aide : un quartier = des carrefours très reliés entre eux (ici 4, 3, 3 et 2). Touche le rond qui clignote jusqu\'à la couleur de l\'anneau.'
+            : 'Aide : chaque triangle forme un quartier. Touche le rond qui clignote jusqu\'à ce qu\'il prenne la couleur de l\'anneau.';
         }
         const full = col.every((k) => k >= 0);
         status(`Routes coupées : ${full ? cut(col) : '?'}   ·   objectif : ${best}`);
@@ -1004,7 +1017,7 @@
       tap(x, y) {
         const i = hitNode(nodes, x, y);
         if (i < 0) return;
-        col[i] = (col[i] + 1) % 3;
+        col[i] = (col[i] + 1) % K;
         this.msg = '';
         if (col.every((k) => k >= 0)) {
           if (!sizesOk(col)) { this.msg = 'Chaque quartier doit avoir au moins 2 carrefours.'; this.wrong++; }
@@ -1017,17 +1030,22 @@
 
   // 2. the big cat: match Rennes to Châteaubourg so that every road is kept (graph isomorphism,
   //    the discrete heart of Gromov-Wasserstein: only distances matter, not labels).
+  // Hard and extreme modes: 6 crossroads; two have 2 roads each, so the number of roads is not
+  // enough: one of them touches the 3-road crossroads, the other a dead end. Two valid answers.
   function makeMatching() {
-    const L = [[40, 76], [82, 100], [124, 76], [134, 130], [70, 142]];
-    const LE = [[0, 1], [1, 2], [2, 3], [1, 4]];
-    const R = [[238, 102], [286, 150], [198, 62], [284, 62], [236, 148]];
-    const RE = [[0, 3], [0, 2], [0, 4], [4, 1]];
-    const PERM = [3, 0, 4, 1, 2]; // one valid answer, used by the step-by-step help
+    const H = hard;
+    const L = H ? [[45, 60], [85, 92], [65, 132], [110, 152], [140, 118], [135, 60]] : [[40, 76], [82, 100], [124, 76], [134, 130], [70, 142]];
+    const LE = H ? [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5]] : [[0, 1], [1, 2], [2, 3], [1, 4]];
+    const R = H ? [[205, 135], [180, 105], [240, 100], [285, 140], [285, 70], [205, 72]] : [[238, 102], [286, 150], [198, 62], [284, 62], [236, 148]];
+    const RE = H ? [[4, 2], [2, 0], [0, 5], [5, 1], [2, 3]] : [[0, 3], [0, 2], [0, 4], [4, 1]];
+    const PERM = H ? [4, 2, 0, 5, 1, 3] : [3, 0, 4, 1, 2]; // one valid answer, used by the step-by-step help
+    const ORDER = H ? [1, 2, 3, 4, 0, 5] : [1, 2, 0, 3, 4]; // the help's order: the most telling crossroads first
+    const n = L.length;
     const key = (u, v) => (u < v ? `${u}-${v}` : `${v}-${u}`);
     const adjR = new Set(RE.map(([u, v]) => key(u, v)));
     const deg = (n, E) => Array.from({ length: n }, (_, i) => E.filter(([u, v]) => u === i || v === i).length);
-    const DL = deg(5, LE), DR = deg(5, RE);
-    const pair = Array(5).fill(-1);
+    const DL = deg(n, LE), DR = deg(n, RE);
+    const pair = Array(n).fill(-1);
     let sel = 1;
     const kept = () => LE.filter(([u, v]) => pair[u] >= 0 && pair[v] >= 0 && adjR.has(key(pair[u], pair[v]))).length;
     const check = (self) => {
@@ -1039,7 +1057,8 @@
     };
     return {
       title: '{c2} · Gromov-Wasserstein', label: '{c2} · Gromov-Wasserstein',
-      help: ['Touche un rond de Rennes, puis son jumeau à Châteaubourg.', 'Chiffre = nombre de routes. Route verte = conservée, rouge = cassée.'],
+      help: H ? ['Touche un rond de Rennes, puis son jumeau à Châteaubourg.', 'Chiffre = nombre de routes. Deux « 2 » ? Regarde leurs voisins.']
+        : ['Touche un rond de Rennes, puis son jumeau à Châteaubourg.', 'Chiffre = nombre de routes. Route verte = conservée, rouge = cassée.'],
       draw() {
         sideLabel('Rennes', 88, 46); sideLabel('Châteaubourg', 242, 46);
         line(160, 44, 160, 150, '#3a3450', 1, [2, 3]);
@@ -1056,18 +1075,18 @@
           node(x, y, i >= 0 ? PCOL[i] : '#4a4560', '#16131f', 7.5); ctext(String(DR[j]), x, y, i >= 0 ? '#16131f' : '#f4ead5', 8);
         });
         if (this.guided) {
-          const i = [1, 2, 0, 3, 4].find((k) => pair[k] !== PERM[k]);
+          const i = ORDER.find((k) => pair[k] !== PERM[k]);
           if (i !== undefined && sel !== i) { blink(...L[i], 12); this.guideText = 'Aide : touche le rond qui clignote, à Rennes.'; }
           else if (i !== undefined) { blink(...R[PERM[i]], 12, PCOL[i]); this.guideText = 'Aide : touche maintenant son jumeau qui clignote, à Châteaubourg.'; }
         }
-        status(sel >= 0 ? `Routes conservées : ${kept()} / 4 · choisis le jumeau du rond blanc` : `Routes conservées : ${kept()} / 4`);
+        status(sel >= 0 ? `Routes conservées : ${kept()} / ${LE.length} · choisis le jumeau du rond blanc` : `Routes conservées : ${kept()} / ${LE.length}`);
       },
       tap(x, y) {
         const li = hitNode(L, x, y);
         if (li >= 0) { sel = li; this.msg = ''; return; }
         const rj = hitNode(R, x, y);
         if (rj < 0 || sel < 0) return;
-        for (let i = 0; i < 5; i++) if (pair[i] === rj) pair[i] = -1;
+        for (let i = 0; i < n; i++) if (pair[i] === rj) pair[i] = -1;
         pair[sel] = rj;
         check(this);
       },
@@ -1075,15 +1094,25 @@
   }
 
   // 3. Rapporteur: spot the anomalous trajectory.
+  // Hard and extreme modes: six trips, all reach the star; the anomaly first moves away from it,
+  // then comes back (a detour), at the same speed as the others.
   function makeAnomaly() {
-    const paths = [
+    const H = hard;
+    const paths = H ? [
+      [[40, 150], [40, 110], [100, 110], [100, 90], [154, 90]],
+      [[284, 42], [204, 42], [204, 80], [166, 80]],
+      [[284, 150], [244, 150], [244, 96], [166, 86]],
+      [[36, 42], [110, 42], [110, 74], [154, 74]],
+      [[160, 38], [160, 70]],
+      [[120, 156], [120, 140], [70, 140], [70, 124], [200, 124], [200, 100], [170, 100], [170, 88]],
+    ] : [
       [[40, 148], [40, 106], [118, 106], [118, 84], [154, 84]],
       [[284, 42], [204, 42], [204, 80], [166, 80]],
       [[284, 148], [244, 148], [244, 92], [166, 88]],
       [[36, 42], [110, 42], [110, 74], [154, 74]],
       [[150, 152], [150, 124], [96, 124], [96, 146], [212, 146], [212, 114], [176, 114], [176, 138], [132, 138]],
     ];
-    const ANOM = 4;
+    const ANOM = H ? 5 : 4;
     const lens = paths.map((p) => p.slice(1).reduce((s, q, k) => s + Math.hypot(q[0] - p[k][0], q[1] - p[k][1]), 0));
     const at = (i, f) => {
       const p = paths[i]; let d = f * lens[i];
@@ -1102,7 +1131,8 @@
     let picked = -1;
     return {
       title: 'Le rapporteur · Anomalie', label: 'Rapporteur · anomalie',
-      help: ['Les trajets normaux vont vers le centre (l\'étoile).', 'Touche la trajectoire anormale.'],
+      help: H ? ['Tous arrivent à l\'étoile, mais les normaux ne s\'en éloignent jamais.', 'Touche la trajectoire anormale.']
+        : ['Les trajets normaux vont vers le centre (l\'étoile).', 'Touche la trajectoire anormale.'],
       draw() {
         for (let x = 30; x <= 290; x += 20) line(x, 38, x, 156, '#2a2540', 1);
         for (let y = 38; y <= 156; y += 20) line(30, y, 290, y, '#2a2540', 1);
@@ -1110,12 +1140,13 @@
           const pulse = this.guided && i === ANOM && !(Math.floor(time * 4) % 2);
           ctx.strokeStyle = pulse ? '#ffffff' : PCOL[i]; ctx.lineWidth = picked === i || pulse ? 3 : 1.8; ctx.setLineDash([]);
           ctx.beginPath(); ctx.moveTo(...PM(...p[0])); p.slice(1).forEach((q) => ctx.lineTo(...PM(...q))); ctx.stroke();
-          const speed = i === ANOM ? 0.16 + 0.08 * Math.sin(time * 2) : 0.22;
+          const speed = i === ANOM && !H ? 0.16 + 0.08 * Math.sin(time * 2) : 0.22;
           const [dx, dy] = at(i, ((time * speed) + i * 0.21) % 1);
           node(dx, dy, '#ffffff', PCOL[i], 2.5);
         });
         ctext('★', 160, 80, '#f2c14b', 12);
-        if (this.guided) this.guideText = 'Aide : la trajectoire violette tourne en rond et n\'arrive jamais au centre. Touche-la.';
+        if (this.guided) this.guideText = H ? 'Aide : la trajectoire qui clignote part d\'abord vers la gauche, loin de l\'étoile, puis fait demi-tour. Touche-la.'
+          : 'Aide : la trajectoire violette tourne en rond et n\'arrive jamais au centre. Touche-la.';
         status('');
       },
       tap(x, y) {
@@ -1130,11 +1161,12 @@
   }
 
   // Bonus: optimal transport (Monge). Move one bike from each full station to an empty one,
-  // with the smallest total distance in blocks. Greedy gives 15, the optimum is 13.
+  // with the smallest total distance in blocks. Normal: greedy gives 15, the optimum is 13.
   function makeTransport() {
     const G = ([gx, gy]) => [40 + gx * 20, 50 + gy * 20];
-    const src = [[1, 1], [6, 4], [11, 1]].map(G);
-    const dst = [[4, 4], [7, 0], [12, 4]].map(G);
+    // Hard and extreme modes: four bikes; "nearest first" costs 15 blocks, the optimum is 9 (unique).
+    const src = (hard ? [[2, 4], [5, 1], [8, 0], [10, 0]] : [[1, 1], [6, 4], [11, 1]]).map(G);
+    const dst = (hard ? [[3, 4], [8, 4], [9, 0], [11, 0]] : [[4, 4], [7, 0], [12, 4]]).map(G);
     const n = src.length;
     const cost = (i, j) => (Math.abs(src[i][0] - dst[j][0]) + Math.abs(src[i][1] - dst[j][1])) / 20;
     const OPT = perms([...Array(n).keys()]).reduce((b, p) => {
@@ -1259,7 +1291,8 @@
     for (const l of wrap(puzzle.title, W - (portrait ? 12 : 172))) { ctx.fillText(l, 6, y); y += 10; }
     ctx.fillStyle = '#c9c3dc'; ctx.font = `7px ${FONT}`;
     for (const h of puzzle.help) for (const l of wrap(h, W - 12)) { ctx.fillText(l, 6, y); y += 8; }
-    if (portrait) pmap = { ox: 18, oy: y + 10, sx: (W - 36) / 122, sy: (H - 50 - y - 10) / 260 };
+    if (portrait) pmap = { ox: 18, oy: y + 10, sx: (W - 36) / 122, sy: (H - 50 - y - 10) / 260, ly: 0 };
+    else pmap.ly = clamp(y - 40, 0, 10);
     puzzle.draw();
     if (puzzle.wonT < 0) {
       button(quitBox(), puzzle.free ? 'Ranger' : 'Quitter');

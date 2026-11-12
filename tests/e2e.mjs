@@ -16,8 +16,6 @@ const exe = process.env.CHROMIUM_PATH;
 function check(ok, msg) { if (!ok) throw new Error(msg); }
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
 
-// Partition puzzle (layout coordinates) and its three districts.
-const NODES = [[60, 74], [102, 54], [90, 116], [152, 64], [192, 48], [178, 102], [232, 124], [274, 94], [262, 146]];
 
 async function play(browser, tag, opts, mode) {
   const p = await browser.newPage(opts);
@@ -64,6 +62,8 @@ async function play(browser, tag, opts, mode) {
   await visitCat(0); await drain();
   await puzzleIs('partitionnement');
   check((await ev(() => __invite.puzzle.title)).startsWith('Minou'), `${tag}: cat name from the link not used`);
+  const NODES = await ev(() => __invite.puzzle.nodes), CLUSTER = await ev(() => __invite.puzzle.cluster); // 12 nodes, 4 districts in hard modes
+  check(NODES.length === (mode === 'normal' ? 9 : 12), `${tag}: wrong partition size for the mode`);
   for (const [x, y] of NODES) await tapLayout(x, y); // everything one colour: districts too small -> 1 error
   check(await ev(() => __invite.puzzle.wrong) === 1, `${tag}: wrong colouring not counted`);
   await ev(() => __invite.snapshot());
@@ -73,7 +73,7 @@ async function play(browser, tag, opts, mode) {
   await visitCat(0, 60); await visitCat(0); await drain(); // step away and back: the cat offers its puzzle again
   await puzzleIs('partitionnement');
   check(await ev(() => __invite.puzzle.wrong) === 1, `${tag}: error lost across background/resume`);
-  for (const [n, [x, y]] of NODES.entries()) for (let t = 0; t < 1 + Math.floor(n / 3); t++) await tapLayout(x, y); // districts 0, 1, 2
+  for (const [n, [x, y]] of NODES.entries()) for (let t = 0; t <= CLUSTER[n]; t++) await tapLayout(x, y); // colour = its district
   await afterWin();
   check(await ev(() => __invite.cats[0].solved), `${tag}: partition not solved by taps`);
 
@@ -150,7 +150,8 @@ async function play(browser, tag, opts, mode) {
   };
   await atRap();
   await puzzleIs('anomalie');
-  await tapLayout(96, 135); // a point on the looping (anomalous) trajectory
+  if (mode === 'normal') await tapLayout(96, 135); // a point on the looping (anomalous) trajectory
+  else await tapLayout(95, 140); // hard modes: a point on the detour that first moves away from the star
   if (mode === 'extreme') {
     await puzzleIs('question 2');
     await p.keyboard.press('Escape');
