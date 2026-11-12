@@ -349,7 +349,8 @@
   // Roads, river, bridges.
   rect(0, 14, 47, 15, '='); rect(20, 0, 21, 27, '='); rect(36, 0, 37, 27, '='); rect(0, 24, 47, 24, '=');
   rect(0, 19, 47, 20, '~');
-  rect(12, 19, 13, 20, 'H'); put(28, 19, 'J'); // the fishing pier rect(20, 19, 21, 20, 'h'); rect(36, 19, 37, 20, 'h');
+  rect(12, 19, 13, 20, 'H'); rect(20, 19, 21, 20, 'h'); rect(36, 19, 37, 20, 'h'); // footbridge, two road bridges
+  put(28, 19, 'J'); // the fishing pier
   // Villejean: Rennes 2 (on strike), the dalle Kennedy and its metro, the CHU block ringed by a loop road.
   for (let y = 0; y < MAP_H; y++) { put(48, y, 'T'); put(49, y, y % 2 ? 'T' : '.'); }
   rect(51, 1, 57, 5, 'C'); rect(60, 1, 64, 5, 'C');
@@ -2111,7 +2112,7 @@
       const ix = W / 2 + Math.sin(t * 0.9) * W * 0.36, img = Math.cos(t * 0.9) < 0 ? flipped(IOANA) : IOANA;
       ctx.drawImage(img, Math.round(ix - 13), Math.round(floorY + (portrait ? 124 : 70) - 22)); // clear of the bottom edge
     }
-    if (!cardShown && Math.floor(t * 2) % 2) centered('Touche l\'écran pour voir ton invitation', W / 2, H - 6, '#f4ead5', 7);
+    if ((!cardShown || partyView) && Math.floor(t * 2) % 2) centered(partyView ? 'Touche l\'écran pour revoir ton invitation' : 'Touche l\'écran pour voir ton invitation', W / 2, H - 6, '#f4ead5', 7);
   }
 
   /* ================= the invitation card ================= */
@@ -2212,6 +2213,10 @@
     if (extreme && fragments() === 2) badges.push('Survivant·e du mode EXTRÊME DE LA MORT QUI TUE. Respect éternel.');
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
     if (badges.length) { $('cBadge').textContent = N(badges.join(' ')); $('cBadge').classList.remove('hidden'); }
+    // Nothing to show in the "your run" column (skipped the game): one narrow column instead of two.
+    const one = !stats.played && !badges.length;
+    document.querySelector('#card .cols').classList.toggle('one', one);
+    document.querySelector('#card .box').style.width = one ? 'min(100%, 560px)' : '';
     if (stats.played) {
       const dip = finalDip || diploma();
       $('cPdf').classList.remove('hidden');
@@ -2258,6 +2263,10 @@
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   });
   $('cReplay').addEventListener('click', (e) => { e.preventDefault(); location.reload(); });
+  // Back to the party to watch it, then a tap (or Space) brings the card back.
+  let partyView = false;
+  $('cParty').addEventListener('click', (e) => { e.preventDefault(); partyView = true; $('card').classList.add('hidden'); });
+  function backToCard() { partyView = false; $('card').classList.remove('hidden'); }
 
   /* ================= score & PDF diploma ================= */
   function fmtTime(sec) {
@@ -2575,6 +2584,7 @@
     if (paused) { if (e.code === 'Escape' || e.code === 'KeyO') { closeObjectives(); e.preventDefault(); } return; }
     if (e.code === 'KeyO' && state === 'play') { openObjectives(); e.preventDefault(); return; }
     if (state === 'end' && !cardShown && (e.code === 'Space' || e.code === 'Enter')) { revealCard(); e.preventDefault(); return; }
+    if (state === 'end' && partyView && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) { backToCard(); e.preventDefault(); return; }
     if (state === 'metroMenu' && metro) {
       const opts = metroBoxes();
       if (e.code === 'Escape') { chooseMetro(-1); e.preventDefault(); return; }
@@ -2604,6 +2614,7 @@
     if (state === 'puzzle') { puzzleTap(x, y); return; }
     if (state === 'metroMenu') { metroTap(x, y); return; }
     if (state === 'end' && !cardShown) { revealCard(); return; }
+    if (state === 'end' && partyView) { backToCard(); return; }
     if (state === 'play') {
       if (!touchUI() && inBox(menuHit(), x, y)) { openObjectives(); return; }
       const wx = x + lastCam.cx, wy = y + lastCam.cy;

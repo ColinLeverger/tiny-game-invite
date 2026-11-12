@@ -167,6 +167,11 @@ async function play(browser, tag, opts, mode) {
   check(new Set(labels).size === labels.length, `${tag}: a puzzle was recorded twice: ${labels.join(', ')}`);
   await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 }); // after the bar scene
   check((await p.textContent('#cBar')).includes('Bar Test'), `${tag}: bar missing from the card`);
+  // Back to the party, then a tap on the scene brings the card back.
+  await p.click('#cParty');
+  check(await p.locator('#card.hidden').count() === 1, `${tag}: "Revoir la fête" did not hide the card`);
+  await tapScreen(40, 40);
+  await p.waitForSelector('#card:not(.hidden)', { timeout: 3000 });
   const pdf = Buffer.from(await ev(() => Array.from(__invite.buildPdf(__invite.diploma()))));
   check(pdf.subarray(0, 5).toString() === '%PDF-', `${tag}: not a PDF`);
   check(errors.length === 0, `${tag}: page errors: ${errors.join(' | ')}`);
@@ -189,6 +194,9 @@ async function robustness(browser) {
   await p.reload();
   await p.click('#skipLink');
   await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 });
+  // The roads cross the Vilaine on bridges (a stray comment once removed them: cars drove on water).
+  check(await p.evaluate(() => [20, 21, 36, 37, 12, 13].every((x) => [19, 20].every((y) => !__invite.blocked(x * 16 + 8, y * 16 + 12)))),
+    'robustness: a bridge over the Vilaine is missing');
   // Every challenge done (developer god mode): every encounter must reach the PDF's "Rencontres du voyage".
   await p.goto(`${BASE}/index.html?test`); await p.fill('#nameInput', 'Iris'); await p.click('button[type=submit]');
   await p.waitForFunction(() => window.__invite && __invite.state === 'dialog');

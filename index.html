@@ -71,7 +71,15 @@
   .btn.alt { background: #fff; }
   .small { font-size: 13px; margin-top: 14px; }
   .small a { color: var(--ink); }
-  #card .box { width: min(100%, 520px); }
+  #card .box { width: min(100%, 560px); }
+  .cols { display: block; }
+  /* Wide screens: the card spreads over two columns (the invitation | your run), no scrolling. */
+  @media (min-width: 760px) {
+    #card .box { width: min(96vw, 1040px); padding: 18px 24px; }
+    .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; align-items: start; }
+    .cols.one { display: block; }
+    #card p { margin: 8px 0; }
+  }
   #card p { margin: 10px 0; line-height: 1.45; }
   #card .row { border-left: 6px solid var(--accent); padding-left: 10px; }
   #card .big { font-size: 18px; font-weight: bold; }
@@ -137,6 +145,7 @@
   <div class="box">
     <h1 id="cTitle"></h1>
     <p class="big" id="cBig">Ketsia est docteure (on espère) ! On fête ça.</p>
+    <div class="cols"><div class="col">
     <p class="row" id="cWhen"></p>
     <p class="row" id="cBar"></p>
     <p class="row hidden" id="cDef"></p>
@@ -144,16 +153,19 @@
       Sophie Germain, Turing… ou en théorème, en graphe, en matrice : tout est permis.</p>
     <div class="row" id="cFood"><p>À manger : le bar prévoit des tapas pour 15 à 20 personnes. Si tu as une grosse faim,
       il y a de bonnes adresses pour un sandwich dans le centre-ville de Rennes.</p><ul id="cFoodList" class="hidden"></ul></div>
+    <p class="hidden" id="cMsg"></p>
+    <p class="sig hidden" id="cFrom"></p>
+    </div><div class="col">
     <p class="row hidden" id="cBadge"></p>
     <p class="row hidden" id="cScore"></p>
     <div class="row hidden" id="cBadgeBox"><img id="cBadgeImg" alt="Ton badge"><p id="cBadgeTxt"></p></div>
-    <p class="hidden" id="cMsg"></p>
-    <p class="sig hidden" id="cFrom"></p>
+    </div></div>
     <div class="btns">
       <a class="btn hidden" id="cMap" target="_blank" rel="noopener">Voir sur la carte</a>
       <a class="btn hidden" id="cPdf" href="#">Mon diplôme (PDF)</a>
       <a class="btn" id="cPhoto" href="#">Photo souvenir</a>
       <a class="btn" id="cIcs" href="#">Ajouter à mon agenda</a>
+      <a class="btn alt" id="cParty" href="#">Revoir la fête</a>
       <a class="btn alt" id="cReplay" href="#">Rejouer</a>
     </div>
   </div>
