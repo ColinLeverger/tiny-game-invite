@@ -192,6 +192,21 @@
     f(5, 6, 2, 2, '#f3c9ab'); f(5, 8, 2, 3, '#3f8a5a'); f(4, 11, 1, 2, '#4a3832'); f(7, 11, 1, 2, '#4a3832'); f(6, 0, 1, 6, '#ffffff');
   });
 
+  // The Vilaine's fish (a roach, a perch, a pike) and Poulpy the octopus, who has no business in a river.
+  const GARDON = makeSprite(['....SSSSSS......', '..SSssssssSS..rr', '.SsRessssssSSrr.', 'Sssssssssssssrr.', 'Swwwwwwwwwwwsrr.', '.SwwwwwwwwwSS.rr', '..SSrwwwrSS.....', '....SSSSSS......'],
+    { S: '#5f6f80', s: '#c9d4de', w: '#eef2f6', r: '#e2505e', R: '#e2505e', e: '#1e1a22' });
+  const PERCHE = makeSprite(['...rr.rr.r......', '..oooooooooo....', '.oyeybyybyyyo.rr', 'oyyyybyybyyyyorr', 'owwwwbwwbwwwwor.', '.owwwwwwwwwwo.rr', '..oorroorroo....', '................'],
+    { o: '#3d5a2a', y: '#b8c24a', b: '#3d5a2a', w: '#e8e4b0', r: '#e8742a', e: '#1e1a22' });
+  const BROCHET = makeSprite(['..............rr........', '....oooooooooooooooo....', '..oogelgggllggglgggo.rr.', 'ooggggggglgggggglgggorrr', 'owwwwwwwwwwwwwwwwwwwworr', '.ooowwwwwwwwwwwwwwwoo.rr', '....oooorroooooooo......'],
+    { o: '#2f4a2a', g: '#5f8a3a', l: '#c8d870', w: '#e0e4c0', e: '#1e1a22', r: '#8a6a2a' });
+  const POULPY = makeSprite(['....PPPPPP....', '..PPppppppPP..', '.PppppppppppP.', 'PppwwppppwwppP', 'PppweppppewppP', 'PpcppppppppcpP', 'PpppppmmpppppP', '.PppppppppppP.', '.pp.pp..pp.pp.', 'pp..pp..pp..pp', 'p...p.pp.p...p', '.pp..p..p..pp.'],
+    { P: '#9a3a6a', p: '#e86a9a', w: '#ffffff', e: '#1e1a22', c: '#ffb0c8', m: '#9a3a6a' });
+  const FISH = [
+    { key: 'gardon', img: GARDON, name: 'Un gardon', cm: [12, 25], p: 0.5 },
+    { key: 'perche', img: PERCHE, name: 'Une perche', cm: [15, 35], p: 0.32 },
+    { key: 'brochet', img: BROCHET, name: 'Un brochet !', cm: [45, 90], p: 0.18 },
+  ];
+
   // Vehicles (drawn facing right, rotated/flipped per lane).
   const CAR_ROWS = ['...kkk.......kkk....', '.CCCCCCCCCCCCCCCCCC.', 'CccccwwwccccwwwwcccY',
     'CccccwwwccccwwwwcccC', 'CccccccccccccccccccC', 'CccccwwwccccwwwwcccC', 'CccccwwwccccwwwwcccY',
@@ -216,6 +231,18 @@
     }
     return makeSprite(CAR_ROWS, { k: TIRE, C: EDGE, c: color, w: GLASS, Y: LIGHT });
   }
+
+  // Extreme mode's night and the ghost's glow: gradients drawn once, not every frame.
+  const NIGHT = canvasOf(840, 840, (f, x) => {
+    const g = x.createRadialGradient(420, 420, 16, 420, 420, 62);
+    g.addColorStop(0, 'rgba(4,4,14,0)'); g.addColorStop(1, 'rgba(4,4,14,0.96)');
+    x.fillStyle = g; x.fillRect(0, 0, 840, 840);
+  });
+  const HALO = canvasOf(60, 60, (f, x) => {
+    const g = x.createRadialGradient(30, 30, 2, 30, 30, 30);
+    g.addColorStop(0, 'rgba(190,215,255,0.45)'); g.addColorStop(1, 'rgba(190,215,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 60, 60);
+  });
 
   /* ================= tiles & world ================= */
   function tileCanvas(ch) {
@@ -248,6 +275,10 @@
       case 'H':
         box(0, 0, T, T, '#a08060'); for (let j = 1; j < T; j += 4) box(0, j, T, 1, '#7a5c40');
         box(0, 0, 2, T, '#5a4030'); box(14, 0, 2, T, '#5a4030'); break;
+      case 'J': // fishing pier: planks over the river
+        box(0, 0, T, T, '#3d78c0'); speck(['#5b94d6', '#3268a8'], 8);
+        box(2, 0, 12, T, '#a07850'); for (let j = 3; j < T; j += 4) box(2, j, 12, 1, '#7a5a38');
+        box(2, 0, 1, T, '#6a4a2a'); box(13, 0, 1, T, '#6a4a2a'); box(3, 14, 2, 2, '#4a3020'); box(11, 14, 2, 2, '#4a3020'); break;
       case '~': box(0, 0, T, T, '#3d78c0'); speck(['#5b94d6', '#3268a8'], 10); box(3, 5, 4, 1, '#6aa2e0'); box(10, 11, 4, 1, '#6aa2e0'); break;
       case '#': // Rennes half-timbered house (colombage)
         box(0, 0, T, T, '#e6d5ad'); box(0, 0, T, 2, '#6e4a2c'); box(0, 0, 2, T, '#6e4a2c'); box(8, 0, 2, T, '#6e4a2c');
@@ -318,7 +349,7 @@
   // Roads, river, bridges.
   rect(0, 14, 47, 15, '='); rect(20, 0, 21, 27, '='); rect(36, 0, 37, 27, '='); rect(0, 24, 47, 24, '=');
   rect(0, 19, 47, 20, '~');
-  rect(12, 19, 13, 20, 'H'); rect(20, 19, 21, 20, 'h'); rect(36, 19, 37, 20, 'h');
+  rect(12, 19, 13, 20, 'H'); put(28, 19, 'J'); // the fishing pier rect(20, 19, 21, 20, 'h'); rect(36, 19, 37, 20, 'h');
   // Villejean: Rennes 2 (on strike), the dalle Kennedy and its metro, the CHU block ringed by a loop road.
   for (let y = 0; y < MAP_H; y++) { put(48, y, 'T'); put(49, y, y % 2 ? 'T' : '.'); }
   rect(51, 1, 57, 5, 'C'); rect(60, 1, 64, 5, 'C');
@@ -398,7 +429,8 @@
     { t: 'Villejean', x: 64 * T, y: 12.5 * T, c: '#9cc0e6' },
     { t: 'Centre-ville', x: 10 * T, y: 7.1 * T },
     { t: 'BAR', x: 10 * T, y: 0.8 * T, c: '#f2c14b' },
-    { t: 'La Vilaine', x: 30 * T, y: 20.2 * T },
+    { t: 'La Vilaine', x: 31.5 * T, y: 20.2 * T },
+    { t: 'Ponton de pêche', x: 28.5 * T, y: 17.6 * T },
     { t: 'Passerelle', x: 13 * T, y: 18.3 * T },
     { t: 'Métro Colombier', x: 11.5 * T, y: 22.4 * T },
   ];
@@ -455,6 +487,20 @@
     if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), t0 + dur);
     g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     o.connect(g); g.connect(audio.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+    return { src: o, g, end: t0 + dur };
+  }
+  let noiseBuf = null;
+  function noise(dur, vol, filter, freq, delay = 0) { // drums and the metro's rumble
+    if (!soundOn || !audio) return null;
+    if (!noiseBuf) {
+      noiseBuf = audio.createBuffer(1, audio.sampleRate, audio.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const t0 = audio.currentTime + delay, src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+    src.buffer = noiseBuf; f.type = filter; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(audio.destination); src.start(t0, Math.random() * 0.5); src.stop(t0 + dur + 0.02);
+    return { src, g, end: t0 + dur };
   }
   const SFX = {
     meow: () => { tone(700, 0.22, 'triangle', 0.08, 350); tone(1050, 0.3, 'triangle', 0.06, -550, 0.2); },
@@ -467,22 +513,111 @@
     coo: () => { tone(420, 0.12, 'sine', 0.06, 80); tone(390, 0.16, 'sine', 0.06, -70, 0.14); },
     hello: () => { tone(587, 0.1, 'square', 0.04); tone(880, 0.16, 'square', 0.04, 0, 0.11); },
   };
-  // Background music: a short original 8-bit loop, scheduled a little ahead on the audio clock.
-  // It plays whenever the sound is on; it stops by itself when the tab is hidden (no frames, no notes).
-  const MEL = [72, 76, 79, 76, 74, 77, 81, 77, 72, 76, 79, 84, 83, 79, 77, 74, 72, 76, 79, 76, 77, 81, 84, 81, 79, 77, 76, 74, 72, 0, 72, 0];
-  const BASS = [48, 53, 48, 43, 48, 53, 43, 48];
+  /* ----- music: one original 8-bit track per scene, scheduled a little ahead on the audio clock ----- */
+  // It plays whenever the sound is on and stops by itself when the tab is hidden (no frames, no notes).
+  // Notation: one token per step; "C5", "F#4", "Bb3" a note, "=" holds the previous one, "-" a rest.
+  // Drums, one character per step: k kick, s snare, x kick+snare, h hi-hat, c rail clack, . nothing.
   const hz = (m) => 440 * 2 ** ((m - 69) / 12);
-  let musicAt = 0, musicStep = 0;
-  function musicTick() {
-    if (!soundOn || !audio || audio.state !== 'running' || state === 'name') { musicAt = 0; return; }
-    const now = audio.currentTime, step = state === 'end' ? 0.16 : 0.21; // faster at the party
-    if (musicAt < now) musicAt = now + 0.05;
-    while (musicAt < now + 0.3) {
-      const i = musicStep % MEL.length;
-      if (MEL[i]) tone(hz(MEL[i]), step * 0.85, 'square', 0.012, 0, musicAt - now);
-      if (i % 2 === 0) tone(hz(BASS[i >> 2]), step * 1.7, 'triangle', 0.03, 0, musicAt - now);
-      musicAt += step; musicStep++;
+  function seq(text) {
+    const toks = text.trim().split(/\s+/), out = toks.map(() => null);
+    toks.forEach((t, i) => {
+      const m = t.match(/^([A-G])([#b]?)(\d)$/);
+      if (!m) return;
+      let len = 1; while (toks[i + len] === '=') len++;
+      const midi = 12 * (Number(m[3]) + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
+      out[i] = [hz(midi), len];
+    });
+    return out;
+  }
+  // Bass from chord roots, one chord per bar of 8 steps ("D/G" splits a bar): pattern per step, "R" root, "F" fifth, "O" octave.
+  function bassLine(chords, oct, pattern) {
+    const semi = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const root = (c) => 12 * (oct + 1) + semi[c[0]] + (c[1] === '#' ? 1 : c[1] === 'b' ? -1 : 0);
+    const out = [];
+    for (const bar of chords.split(' ')) {
+      const parts = bar.split('/');
+      for (let k = 0; k < 8; k++) {
+        const ch = pattern[k];
+        if (!'RFO'.includes(ch)) { out.push(null); continue; }
+        const r = root(parts[Math.floor(k * parts.length / 8)]);
+        let len = 1; while (pattern[k + len] === '=') len++;
+        out.push([hz(ch === 'F' ? r + 7 : ch === 'O' ? r + 12 : r), len]);
+      }
     }
+    return out;
+  }
+  const TRACKS = {
+    // Walking around Rennes: a cheerful theme in two parts (128 steps, about 24 s).
+    map: { step: 0.19, leadType: 'square', leadVol: 0.012, bassType: 'triangle', bassVol: 0.03, drums: 'k.h.s.h.k.k.s.h.', drumVol: 0.5,
+      lead: seq(`E5 G5 C6 G5 E5 = D5 C5  E5 = A4 C5 E5 = D5 C5  A4 C5 F5 = A5 = G5 F5  G5 = = D5 B4 = - -
+                 E5 G5 C6 G5 E5 = D5 C5  A5 = G5 E5 C5 = E5 G5  F5 E5 D5 = B4 C5 D5 B4  C5 = = = - G4 A4 B4
+                 C5 = A4 C5 F5 = E5 F5  D5 = B4 D5 G5 = F5 G5  E5 = G5 B5 G5 = E5 D5  C5 = E5 A5 = G5 E5 C5
+                 A5 = G5 F5 C5 = F5 A5  B5 = A5 G5 D5 = G5 B5  C6 = G5 E5 C5 E5 G5 C6  B5 = G5 = D5 = B4 D5`),
+      bass: bassLine('C A F G C A D/G C F G E A F G C G', 3, 'R=F=R=F=') },
+    // Puzzles: slow, thoughtful arpeggios in A minor.
+    puzzle: { step: 0.24, leadType: 'triangle', leadVol: 0.035, bassType: 'triangle', bassVol: 0.03, drums: null,
+      lead: seq(`A4 C5 E5 C5 A4 C5 E5 C5  A4 C5 F5 C5 A4 C5 F5 C5  G4 C5 E5 C5 G4 C5 E5 C5  G#4 B4 E5 B4 G#4 B4 E5 B4
+                 A4 C5 E5 C5 A4 C5 E5 C5  A4 D5 F5 D5 A4 D5 F5 D5  G#4 B4 E5 B4 G#4 B4 D5 B4  A4 C5 E5 A5 = = - -`),
+      bass: bassLine('A F C E A D E A', 2, 'R=======') },
+    // The climbing wall: EPIC. Driving D minor, octave bass, full drums.
+    epic: { step: 0.13, leadType: 'square', leadVol: 0.016, bassType: 'sawtooth', bassVol: 0.022, drums: 'khskkhsh', drumVol: 0.8,
+      lead: seq(`D5 = A4 D5 F5 = E5 D5  D5 = F5 = Bb5 = A5 F5  E5 = G5 = C6 = Bb5 G5  C#6 = A5 = E5 = C#5 E5
+                 F5 = A5 D6 = C6 A5 F5  F5 = Bb5 D6 = C6 Bb5 F5  G5 Bb5 D6 Bb5 A5 C#6 E6 C#6  D6 = = = A5 = D6 =
+                 G5 = Bb5 = D6 = C6 Bb5  A5 = F5 = D5 = F5 A5  Bb5 = D6 = F6 = E6 D6  C#6 = E6 = A6 = G6 E6
+                 G6 = = F6 E6 = D6 =  F6 = = E6 D6 = A5 =  G#5 = B5 = E6 = D6 B5  C#6 = E6 = A6 = = =`),
+      bass: bassLine('D Bb C A D Bb G/A D G D Bb A G D E/A A', 2, 'RORORORO') },
+    // The metro: a little bossa groove; while the train rolls, rails clack and the tunnel rumbles.
+    metro: { step: 0.17, leadType: 'triangle', leadVol: 0.04, bassType: 'triangle', bassVol: 0.03, drums: 'c.c..h..', drumVol: 0.7,
+      lead: seq(`A4 = C5 = F5 E5 D5 C5  Bb4 = D5 = G5 F5 E5 D5  C5 = E5 = A5 G5 F5 E5  F5 = = = - - C5 D5
+                 A4 = C5 = F5 G5 A5 F5  G5 = Bb5 = A5 G5 F5 D5  E5 = G5 = C6 Bb5 G5 E5  F5 = = = - - - -`),
+      bass: bassLine('F Bb C F F Bb C F', 2, 'R.F.R.F.'),
+      fx: (i, d, step) => { if (state === 'metro') noise(step * 1.6, 0.06, 'lowpass', 140 + 50 * Math.sin(i), d); } },
+    // Fishing on the Vilaine: a lazy, sunny tune.
+    fishing: { step: 0.22, leadType: 'triangle', leadVol: 0.04, bassType: 'triangle', bassVol: 0.028, drums: '....h...', drumVol: 0.4,
+      lead: seq(`C5 = = A4 F4 = A4 C5  D5 = = C5 A4 = - -  Bb4 = = D5 F5 = D5 Bb4  C5 = = = - - - -
+                 A4 = C5 = F5 = E5 D5  G4 = Bb4 = D5 = C5 Bb4  A4 = = G4 F4 = = =  - - - - - - C5 D5`),
+      bass: bassLine('F D Bb C F G C F', 2, 'R...F...') },
+    // The party at the bar: four on the floor, pumping bass, a festive tune in G.
+    party: { step: 0.14, leadType: 'square', leadVol: 0.014, bassType: 'square', bassVol: 0.016, drums: 'khxhkhxh', drumVol: 0.8,
+      lead: seq(`B4 D5 G5 D5 B5 = A5 G5  G5 = E5 = B4 E5 G5 B5  C6 = B5 A5 G5 E5 G5 =  F#5 = A5 = D6 = C6 A5
+                 B5 = D6 B5 G5 = B5 D6  E6 = D6 B5 G5 = E5 G5  A5 G5 E5 C5 E5 G5 C6 E6  D6 = C6 = A5 = F#5 A5
+                 E6 = D6 C6 G5 = E5 G5  F#6 = E6 D6 A5 = F#5 A5  D6 = B5 = F#5 = B5 D6  E6 = = B5 G5 = E5 =
+                 C6 E6 G6 E6 C6 = G5 E5  D6 F#6 A6 F#6 D6 = A5 F#5  G6 = D6 B5 G5 = D6 =  G6 = = = - G5 A5 B5`),
+      bass: bassLine('G E C D G E C D C D B E C D G G', 2, 'RORORORO') },
+  };
+  function drum(ch, d, vol) {
+    if (ch === 'k' || ch === 'x') tone(130, 0.12, 'sine', 0.1 * vol, -90, d);
+    if (ch === 's' || ch === 'x') noise(0.12, 0.05 * vol, 'bandpass', 1800, d);
+    if (ch === 'h') noise(0.03, 0.03 * vol, 'highpass', 7000, d);
+    if (ch === 'c') { noise(0.05, 0.08 * vol, 'bandpass', 2600, d); tone(190, 0.04, 'square', 0.015 * vol, 0, d); }
+  }
+  const musicScene = () => {
+    if (state === 'end') return 'party';
+    if (state === 'metro' || state === 'metroMenu') return 'metro';
+    if (state === 'puzzle' && puzzle) return /escalade/.test(puzzle.label) ? 'epic' : puzzle.free ? 'fishing' : 'puzzle';
+    return 'map';
+  };
+  let musicAt = 0, musicStep = 0, musicNow = '', musicNodes = [];
+  function musicTick() {
+    if (!soundOn || !audio || audio.state !== 'running' || state === 'name') { musicAt = 0; musicNow = ''; return; }
+    const now = audio.currentTime, sc = musicScene();
+    if (sc !== musicNow) { // new scene: fade out what is still sounding, start the new track from the top
+      for (const n of musicNodes) if (n.end > now) { try { n.g.gain.cancelScheduledValues(now); n.g.gain.setTargetAtTime(0.0001, now, 0.03); n.src.stop(now + 0.2); } catch (e) { /* already stopped */ } }
+      musicNodes = []; musicNow = sc; musicStep = 0; musicAt = now + 0.1;
+    }
+    if (musicAt < now) musicAt = now + 0.05;
+    const tr = TRACKS[sc];
+    musicNodes = musicNodes.filter((n) => n.end > now);
+    while (musicAt < now + 0.3) {
+      const d = musicAt - now, i = musicStep;
+      const L = tr.lead[i % tr.lead.length], B = tr.bass[i % tr.bass.length];
+      if (L) musicNodes.push(tone(L[0], L[1] * tr.step * 0.92, tr.leadType, tr.leadVol, 0, d));
+      if (B) musicNodes.push(tone(B[0], B[1] * tr.step * 0.9, tr.bassType, tr.bassVol, 0, d));
+      if (tr.drums) drum(tr.drums[i % tr.drums.length], d, tr.drumVol);
+      if (tr.fx) tr.fx(i, d, tr.step);
+      musicAt += tr.step; musicStep++;
+    }
+    musicNodes = musicNodes.filter(Boolean);
   }
   const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   function unlockAudio() {
@@ -1105,10 +1240,10 @@
     if (portrait) pmap = { ox: 18, oy: y + 10, sx: (W - 36) / 122, sy: (H - 50 - y - 10) / 260 };
     puzzle.draw();
     if (puzzle.wonT < 0) {
-      button(quitBox(), 'Quitter');
+      button(quitBox(), puzzle.free ? 'Ranger' : 'Quitter');
       if (!puzzle.noGuide && !extreme) button(helpBox(), puzzle.guided ? 'Aide ✓' : 'Aide', puzzle.guided);
-      if (puzzle.time > SKIP_AFTER && !extreme) button(skipBox(), 'Passer (100)');
-      if (extreme) {
+      if (puzzle.time > SKIP_AFTER && !extreme && !puzzle.free) button(skipBox(), 'Passer (100)');
+      if (extreme && !puzzle.free) {
         const left = Math.max(0, Math.ceil(PUZZLE_LIMIT - puzzle.time));
         const b = helpBox();
         centered(`⏱ ${left} s`, b.x + b.w / 2, b.y + b.h / 2, left < 10 ? '#ff6b6b' : '#f2c14b', 8);
@@ -1120,13 +1255,13 @@
   }
   function puzzleTap(x, y) {
     if (!puzzle || puzzle.wonT >= 0) return;
-    if (inBox(quitBox(), x, y)) { quitPuzzle(); return; }
+    if (inBox(quitBox(), x, y)) { quitPuzzle(puzzle.quitMsg && puzzle.quitMsg()); return; }
     if (!puzzle.noGuide && !extreme && inBox(helpBox(), x, y)) {
       puzzle.guided = !puzzle.guided; puzzle.msg = '';
       if (puzzle.guided && !puzzle.hints) puzzle.hints = 1;
       return;
     }
-    if (puzzle.time > SKIP_AFTER && !extreme && inBox(skipBox(), x, y)) { puzzle.skipped = true; win(); return; }
+    if (puzzle.time > SKIP_AFTER && !extreme && !puzzle.free && inBox(skipBox(), x, y)) { puzzle.skipped = true; win(); return; }
     puzzle.tap(x, y);
   }
 
@@ -1226,14 +1361,98 @@
     return true;
   }
   // Colin, found at the top of the maths tower, walks behind the cats with a little heart over his head.
-  const colin = { x: 0, y: 0, moving: false };
+  const colin = { x: 0, y: 0, moving: false, dir: 'd' };
   function colinPos() {
     const idx = trail.length - 1 - (following().length + 1) * 18;
     if (idx < 0) { colin.moving = false; return colin; }
-    const p = trail[idx];
+    const p = trail[idx], q = trail[Math.max(0, idx - 4)];
+    const dx = p.x - q.x, dy = p.y - q.y;
+    if (Math.abs(dx) + Math.abs(dy) > 0.5) colin.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
     colin.moving = colin.x !== p.x || colin.y !== p.y;
     colin.x = p.x; colin.y = p.y;
     return colin;
+  }
+
+  /* ----- fishing in the Vilaine, from the pier: three kinds of fish, and Poulpy ----- */
+  const PIER = { x: 28 * T + 8, y: 19 * T + 10, t: 0, sat: false };
+  const fishCaught = () => Object.values(stats.fish || {}).reduce((a, b) => a + b, 0);
+  function updatePier(dt) {
+    const on = Math.abs(player.x - PIER.x) < 7 && Math.abs(player.y - PIER.y) < 7;
+    if (!on) { PIER.sat = false; PIER.t = 0; return false; }
+    if (PIER.sat || player.moving) { PIER.t = 0; return false; }
+    if ((PIER.t += dt) < 0.4) return false;
+    PIER.sat = true; meet('fish');
+    say(fishCaught() ? [['Ketsia', 'On relance la ligne ?']] : [
+      ['', 'Une canne à pêche attend au bout du ponton. Personne ne dira rien si Ketsia l\'emprunte un moment.'],
+      ['Ketsia', 'Une petite pause pêche dans la Vilaine ? Il paraît qu\'il y a des gardons, des perches… et même des brochets.'],
+    ], () => startPuzzle(makeFishing(), () => {}, () => {}));
+    return true;
+  }
+  function makeFishing() {
+    let phase = 'wait', t = 0, wait = 1.5 + rnd() * 2.2, catchFish = null, catchCm = 0;
+    const counts = () => fishCaught();
+    const cast = () => { phase = 'wait'; t = 0; wait = 1.2 + rnd() * 2.5; };
+    const pick = () => {
+      const poulpy = (stats.fish && stats.fish.poulpy) || 0;
+      if (rnd() < (poulpy ? 0.04 : counts() >= 3 ? 0.3 : 0.08)) return { key: 'poulpy', img: POULPY, name: poulpy ? 'Poulpy, encore lui !' : 'Poulpy le poulpe !', cm: [40, 40] };
+      let r = rnd();
+      for (const f of FISH) { if (r < f.p) return f; r -= f.p; }
+      return FISH[0];
+    };
+    return {
+      title: 'La Vilaine · Pêche', label: 'Pêche', noGuide: true, free: true,
+      help: ['Attends que le bouchon plonge, puis touche l\'écran (ou Espace) pour ferrer.', 'Trop tôt, le poisson file. Trop tard aussi.'],
+      quitMsg: () => `Tu ranges la canne. ${counts() ? `Prises : ${counts()}.` : 'Rien cette fois… les poissons font la fête aussi.'}`,
+      get phase() { return phase; },
+      tick(dt) {
+        t += dt;
+        if (phase === 'wait' && t > wait) { phase = 'bite'; t = 0; SFX.coo(); }
+        else if (phase === 'bite' && t > (extreme ? 0.55 : 0.9)) { phase = 'miss'; t = 0; this.msg = 'Raté ! Il a mangé l\'appât et filé.'; }
+        else if (phase === 'miss' && t > 1.4) { this.msg = ''; cast(); }
+      },
+      action() {
+        if (phase === 'wait') { this.msg = 'Trop tôt ! Ça a fait fuir le poisson.'; phase = 'miss'; t = 0; return; }
+        if (phase === 'bite') {
+          catchFish = pick(); catchCm = Math.round(catchFish.cm[0] + rnd() * (catchFish.cm[1] - catchFish.cm[0]));
+          stats.fish = stats.fish || {}; stats.fish[catchFish.key] = (stats.fish[catchFish.key] || 0) + 1;
+          if (catchFish.key === 'poulpy') meet('poulpy');
+          phase = 'caught'; t = 0; this.msg = ''; SFX.win(); return;
+        }
+        if (phase === 'caught' && t > 0.4) cast();
+      },
+      tap() { this.action(); },
+      draw() {
+        const top = portrait ? 70 : 44, water = top + (H - top) * 0.32, bottom = H - (portrait ? 22 : 12);
+        ctx.fillStyle = '#9cc0e6'; ctx.fillRect(0, top, W, water - top); // sky
+        ctx.fillStyle = '#ffcf6a'; ctx.beginPath(); ctx.arc(W - 30, top + 10, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#3d78c0'; ctx.fillRect(0, water, W, bottom - water);
+        ctx.fillStyle = '#2d5f9e'; for (let k = 0; k < 6; k++) ctx.fillRect((k * 61 + time * 8) % W, water + 8 + k * 9, 14, 1);
+        for (let k = 0; k < 3; k++) { // fish shadows going by
+          const fx = (k * 97 + time * (10 + k * 4)) % (W + 40) - 20, fy = water + 18 + k * 14;
+          if (fy < bottom - 4) { ctx.fillStyle = 'rgba(20,40,80,.45)'; ctx.fillRect(fx, fy, 10, 3); ctx.fillRect(fx + 10, fy - 1, 3, 5); }
+        }
+        ctx.fillStyle = '#a07850'; ctx.fillRect(0, water - 4, 46, 6); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(8, water + 2, 3, 12); ctx.fillRect(36, water + 2, 3, 12);
+        ctx.drawImage(KS.u[0], 22, water - 20);
+        const fx = W * 0.62, dip = phase === 'bite' ? 3 + Math.sin(t * 30) * 1.5 : Math.sin(time * 2.5) * 0.8, fy = water + dip;
+        const tipX = W * 0.5, tipY = water - 44;
+        ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(32, water - 12); ctx.lineTo(tipX, tipY); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 0.5; ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(fx, fy - 2); ctx.stroke();
+        if (phase !== 'caught') {
+          ctx.fillStyle = '#e2505e'; ctx.fillRect(fx - 2, fy - 3, 4, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(fx - 2, fy, 4, 2);
+          if (phase === 'bite') centered('!', fx, fy - 12, '#f2c14b', 14);
+        } else {
+          const f = catchFish, sc = f.img.width > 20 ? 3 : 4;
+          ctx.fillStyle = 'rgba(20,16,32,.82)'; ctx.fillRect(10, top + 4, W - 20, bottom - top - 8);
+          ctx.drawImage(f.img, Math.round(W / 2 - f.img.width * sc / 2), Math.round(top + 22), f.img.width * sc, f.img.height * sc);
+          const ty = top + 30 + f.img.height * sc;
+          centered(f.name, W / 2, ty, '#f2c14b', 10);
+          centered(f.key === 'poulpy' ? 'Un poulpe dans la Vilaine ?! Il te fait un clin d\'œil et replonge.' : `${catchCm} cm · relâché dans la Vilaine`, W / 2, ty + 13, '#f4ead5', 7);
+          if (t > 0.4) centered('Touche pour relancer la ligne', W / 2, ty + 26, '#c9c3dc', 7);
+        }
+        const c = stats.fish || {};
+        status(`Prises : ${counts()}  ·  gardons ${c.gardon || 0} · perches ${c.perche || 0} · brochets ${c.brochet || 0}${c.poulpy ? ' · Poulpy ♥' : ''}`);
+      },
+    };
   }
 
   /* ----- benches: sit for a moment and hear a story from the history of mathematics ----- */
@@ -1362,7 +1581,7 @@
     if (i < 0) { metroLock = -1; return false; }
     if (i === metroLock) return false;
     metroLock = i;
-    metro = { from: i, to: -1, t: 0, dur: extreme ? 5 : 1.8 };
+    metro = { from: i, to: -1, t: 0, dur: extreme ? 5 : 2.6 }; // long enough to hear the train
     state = 'metroMenu'; moveTarget = null; keys.up = keys.down = keys.left = keys.right = false;
     return true;
   }
@@ -1414,7 +1633,7 @@
     if (state === 'puzzle' && puzzle) {
       puzzle.time += dt;
       if (puzzle.tick) puzzle.tick(dt);
-      if (extreme && puzzle.wonT < 0 && puzzle.time > PUZZLE_LIMIT) {
+      if (extreme && !puzzle.free && puzzle.wonT < 0 && puzzle.time > PUZZLE_LIMIT) {
         quitPuzzle('Trop lent ! Le jury s\'impatiente. Éloigne-toi et reviens retenter.');
         return;
       }
@@ -1461,6 +1680,7 @@
     if (catActive(noble) && !noble.wait && dist(player, noble) < 22) { if (noble.escaped) recatch(noble); else meetCat(noble); return; }
     if (updateClimbSpot(dt)) return;
     if (updateBenches(dt)) return;
+    if (updatePier(dt)) return;
     if (updateBigcat(dt)) return;
     if (edge(rap, 26, meetRapporteur)) return;
     if (edge(bikeSpot, 26, meetBikes)) return;
@@ -1474,11 +1694,30 @@
       cy: Math.round(clamp(player.y - H / 2 - 8, portrait ? -22 : -14, world.height - H)), // room for the HUD
     };
   }
-  function textShadow(t, x, y, col = '#ffffff', size = 7) {
-    ctx.font = `bold ${size}px ${FONT}`; ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillText(t, x + 0.6, y + 0.6);
-    ctx.fillStyle = col; ctx.fillText(t, x, y);
+  // Text is the costliest thing a canvas draws each frame. Each label is rendered once, at full
+  // resolution, into a small image; after that, drawing it is a single drawImage.
+  const textCache = new Map();
+  function textImg(t, col, size, shadow) {
+    const key = `${t}|${col}|${size}|${shadow}`;
+    let c = textCache.get(key);
+    if (c) return c;
+    if (textCache.size > 400) textCache.clear();
+    const font = `bold ${size * S}px ${FONT}`;
+    ctx.save(); ctx.font = font; const w = Math.ceil(ctx.measureText(t).width); ctx.restore();
+    c = document.createElement('canvas'); c.width = w + 4; c.height = Math.ceil(size * S * 1.5) + 4;
+    const x = c.getContext('2d'); x.font = font; x.textBaseline = 'alphabetic';
+    c.base = Math.ceil(size * S * 1.1) + 1; // baseline, in image pixels
+    if (shadow) { x.fillStyle = 'rgba(0,0,0,.65)'; x.fillText(t, 1 + 0.6 * S, c.base + 0.6 * S); }
+    x.fillStyle = col; x.fillText(t, 1, c.base);
+    c.tw = w; textCache.set(key, c);
+    return c;
   }
+  function drawText(t, x, y, col, size, align = 'center', shadow = true) { // y = baseline, as fillText
+    const c = textImg(t, col, size, shadow);
+    const dx = align === 'center' ? x - (c.tw / 2 + 1) / S : x - 1 / S;
+    ctx.drawImage(c, Math.round(dx * S) / S, Math.round((y - c.base / S) * S) / S, c.width / S, c.height / S);
+  }
+  const textShadow = (t, x, y, col = '#ffffff', size = 7) => drawText(t, x, y, col, size);
   function catPos(cat) {
     if (catActive(cat)) return { x: cat.x, y: cat.y, flip: !!cat.flip, moving: !!cat.run };
     const idx = trail.length - 1 - (following().indexOf(cat) + 1) * 18;
@@ -1522,7 +1761,10 @@
     ctx.fillStyle = '#2c3a5e'; ctx.fillRect(clx + reach * 2, cly + 5, 1, 2); ctx.fillRect(clx + 3 - reach * 2, cly + 5, 1, 2);
     ctx.fillStyle = '#f3c9ab'; ctx.fillRect(clx + (reach ? 0 : 3), cly - 1, 1, 2);
     ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(clx + 2, cly - 12, 0.4, 12); // rope
-    for (const l of LABELS) textShadow(l.t, l.x - cx, l.y - cy, l.c || '#ffffff', l.c ? 8 : 6);
+    for (const l of LABELS) { // only the labels on screen
+      const lx = l.x - cx, ly = l.y - cy;
+      if (lx > -90 && lx < W + 90 && ly > -10 && ly < H + 10) textShadow(l.t, lx, ly, l.c || '#ffffff', l.c ? 8 : 6);
+    }
 
     const ents = [];
     for (const c of cars) ents.push({ y: c.y + c.img.height / 2, draw: () => ctx.drawImage(c.img, Math.round(c.x - c.img.width / 2 - cx), Math.round(c.y - c.img.height / 2 - cy)) });
@@ -1547,7 +1789,7 @@
       const c = colinPos();
       ents.push({ y: c.y, draw: () => {
         const sx = Math.round(c.x - COLIN.width / 2 - cx), sy = Math.round(c.y - COLIN.height - cy - (c.moving ? Math.floor(time * 8) % 2 : 0));
-        ctx.drawImage(COLIN, sx, sy);
+        ctx.drawImage(COLIN_DIR[c.dir] || COLIN, sx, sy);
         textShadow('♥', c.x - cx, sy - 2 + Math.sin(time * 3) * 1.2, '#ff6b9a', 8);
       } });
     }
@@ -1600,15 +1842,11 @@
     }
     if (extreme && state !== 'name') { // pitch-black night, a small halo around Ketsia
       const px = player.x - cx, py = player.y - 8 - cy;
-      const g = ctx.createRadialGradient(px, py, 16, px, py, 62);
-      g.addColorStop(0, 'rgba(4,4,14,0)'); g.addColorStop(1, 'rgba(4,4,14,0.96)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.drawImage(NIGHT, Math.round(px) - 420, Math.round(py) - 420); // pre-rendered once
     }
     if (ghost.on && state !== 'name') { // Reviewer 2 glows a ghastly pale blue, visible in the night
       const gx = ghost.x - cx, gy = ghost.y - cy + Math.sin(time * 2) * 2;
-      const halo = ctx.createRadialGradient(gx, gy, 2, gx, gy, 30);
-      halo.addColorStop(0, 'rgba(190,215,255,0.45)'); halo.addColorStop(1, 'rgba(190,215,255,0)');
-      ctx.fillStyle = halo; ctx.fillRect(gx - 30, gy - 30, 60, 60);
+      ctx.drawImage(HALO, Math.round(gx) - 30, Math.round(gy) - 30);
       ctx.globalAlpha = ghost.cool > 0 ? 0.3 : ghost.awake ? 0.9 : 0.5;
       ctx.drawImage(GHOST, Math.round(gx - 7), Math.round(gy - 8));
       ctx.globalAlpha = 1;
@@ -1651,6 +1889,7 @@
       li((stats.tapas || 0) > 0, `Le pigeon voleur des tapas de ce soir, au centre-ville (sauvées : ${stats.tapas || 0} fois)`),
       li((stats.metro || 0) > 0, `Le métro : il te mène jusqu'à Villejean (${stats.metro || 0} trajets)`),
       li(storyNext >= STORIES.length, `Les bancs : assieds-toi un instant pour une histoire des maths (${Math.min(storyNext, STORIES.length)}/${STORIES.length})`),
+      li(fishCaught() > 0, `La pêche : un ponton t'attend sur la Vilaine (${fishCaught()} prises${(stats.fish || {}).poulpy ? ', Poulpy compris' : ''})`),
       li(climbDone, climbDone ? 'Secret trouvé : la tour des maths… et Colin' : 'Un secret se cache sur le campus… (indice : il faut lever les yeux)'),
       '</ul><h3>Commandes</h3><p>Flèches, ZQSD, ou toucher la carte pour marcher. Maj ou bouton B : avancer à pas de loup.',
       ' Toucher un chat qui te suit (ou Espace) : une caresse. ✥ : croix directionnelle. ♪ : le son et la musique.</p>',
@@ -1669,7 +1908,7 @@
     const hudH = 5 + hl.length * 8;
     ctx.fillStyle = 'rgba(20,16,32,.78)'; ctx.fillRect(0, 0, W, hudH);
     ctx.fillStyle = '#f4ead5';
-    hl.forEach((l, i) => ctx.fillText(l, 4, 9 + i * 8));
+    hl.forEach((l, i) => drawText(l, 4, 9 + i * 8, '#f4ead5', 7, 'left', false));
     if (!touch) {
       const mb = menuBox(); // the objectives button
       ctx.fillStyle = 'rgba(242,193,75,.25)'; ctx.fillRect(mb.x, mb.y, mb.w, mb.h);
@@ -1711,7 +1950,15 @@
     }
   }
 
+  const wrapCache = new Map();
   function wrap(text, maxW) {
+    const key = `${ctx.font}|${maxW}|${text}`, hit = wrapCache.get(key);
+    if (hit) return hit;
+    if (wrapCache.size > 300) wrapCache.clear();
+    const lines = wrapNow(text, maxW); wrapCache.set(key, lines);
+    return lines;
+  }
+  function wrapNow(text, maxW) {
     const words = text.split(' '); const lines = []; let cur = '';
     for (const w of words) {
       const t = cur ? cur + ' ' + w : w;
@@ -1781,12 +2028,15 @@
   { k: '#1e1a22', h: '#2b2340', S: '#e8b896', B: '#2e86c1', n: '#d9a083', m: '#a8605a', T: '#1abc9c', P: '#2c3a5e', K: '#1e1a22' });
   // Colin: tall, hair down to the shoulders, bright blue glasses, mutton chops, colourful clothes,
   // and a guitar (no case) slung across his back: the neck over his shoulder, the body at his hip.
-  const COLIN = makeSprite(['.wd...............', '.dd..hhhhhhhh.....', '..d.hhhhhhhhhh....', '..d.hhSSSSSShhh...', '...dhBBBSSBBBhh...',
-    '...dhBeBBBBeBhh...', '...dhcSSSnSSchh...', '...dhcccccccchh...', '...dhhcSmmSchhh...', '...dhh.SSSS.hhh...',
-    '...hTTRRUUOOTTh...', '...hRUUOOTTRRUh.gg', '...TUUOOTTRRUUTggg', '..SUOOTTRRUUOOTSgg', '...OTTRRUUOOTTRgdg',
-    '....PPPPPPPPPP.gg.', '....PPPP..PPPP....', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'],
-  { h: '#5a3a22', c: '#3e2616', S: '#f0c3a5', n: '#d9a083', m: '#a8605a', B: '#2e6fd8', e: '#1e1a22',
-    T: '#f2c14b', R: '#e2505e', U: '#2fa39a', O: '#9b59b6', P: '#2c3a5e', K: '#1e1a22', g: '#c8873a', d: '#6b3e1e', w: '#e8e2c0' });
+  const COLIN_PAL = { h: '#5a3a22', c: '#3e2616', S: '#f0c3a5', n: '#d9a083', m: '#a8605a', B: '#2e6fd8', e: '#1e1a22',
+    T: '#f2c14b', R: '#e2505e', U: '#2fa39a', O: '#9b59b6', P: '#2c3a5e', K: '#1e1a22',
+    g: '#e0943e', G: '#7a3f14', o: '#3a1e0a', k: '#f0c878', w: '#ffffff', z: '#2b1a10' };
+  // Front, back and side views; the left view is the right one flipped. The back shows the whole guitar.
+  const COLIN_DIR = { d: makeSprite(['.ww...............', '.kk..hhhhhhhh.....', '..k.hhhhhhhhhh....', '..k.hhSSSSSShhh...', '...khBBBSSBBBhh...', '...khBeBBBBeBhh...', '...khcSSSnSSchh...', '...khcccccccchh...', '...khhcSmmSchhh...', '...khh.SSSS.hhh...', '...hzzRRUUOOTTh...', '...hRUzzOTTRRUhGG.', '...TUUOOzzRRUUGggG', '..SUOOTTRRzzOOGogG', '...OTTRRUUOOzzGogG', '....PPPPPPPPPPGggG', '....PPPP..PPPP.GG.', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'], COLIN_PAL),
+    u: makeSprite(['.............ww...', '.....hhhhhhhhkw...', '....hhhhhhhhkh....', '....hhhhhhhhkh....', '....hhhhhhhkhh....', '....hhhhhhhkhh....', '....hhhhhhkhhh....', '....hhhhhhkhhh....', '....hhhhhkhhhh....', '....hhhhhkhhhh....', '...TThGGGhhhhRR...', '...RUGgggGhhhUO...', '...TUGgggGRRUUT...', '..SUOOGgGRUUOOTS..', '...OGgggggGOTTR...', '....GgggggGPPP....', '....PGGGGGPPPP....', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'], COLIN_PAL),
+    r: makeSprite(['ww................', '.k...hhhhhh.......', '.k..hhhhhhhh......', '..k.hhhhhSSSh.....', '..k.hhhhBBBBB.....', '..k.hhhhSBeBS.....', '..k.hhhhcSSSnS....', '...khhhhcccccS....', '...khhhhcSmmS.....', '...khhhhhSSS......', '..GGGhhTTTTTT.....', '.GgggGTRRUUOOT....', '.GgggGTUUOOTTR....', '..GgG.OTTRRUSS....', '.GgggGTRRUUOOT....', '.GgggGPPPPPPP.....', '..GGG.PPP..PPP....', '......PPP..PPP....', '......PPP..PPP....', '......KKKK.KKKK...'], COLIN_PAL) };
+  COLIN_DIR.l = flipH(COLIN_DIR.r);
+  const COLIN = COLIN_DIR.d;
   // Cabbage heads ("têtes de chou"), partying at the bar.
   const CHOU_ROWS = ['.....lLLLLl.....', '...lLLlLLlLLl...', '..lLlLLLLLLlLl..', '..LLLeLLLLeLLL..', '..lLLLLLLLLLLl..',
     '..LlLLLmmLLLlL..', '...lLLLLLLLLl...', '.....lLLLLl.....', ...GUEST_ROWS.slice(8)];
@@ -1946,6 +2196,8 @@
     if (supsFound() === 3) badges.push('Réunion d\'encadrement au complet : Loïc, Ioana et Véronique seront au bar.');
     if ((stats.tapas || 0) > 0) badges.push(`Tu as sauvé ${stats.tapas > 1 ? `${stats.tapas} fois` : 'une fois'} les tapas de ce soir des griffes du pigeon voleur.`);
     if (climbDone) badges.push('Badge secret : tu as grimpé la tour des maths, et Colin est descendu avec toi.');
+    const fishN = Object.values(stats.fish || {}).reduce((a, b) => a + b, 0);
+    if (fishN) badges.push(`Pêche dans la Vilaine : ${fishN > 1 ? `${fishN} prises` : 'une prise'}${(stats.fish || {}).poulpy ? ', dont Poulpy le poulpe (si, si).' : '.'}`);
     if (otDone) badges.push('Badge Monge-Kantorovich : tu as rééquilibré les vélos de Rennes au moindre coût.');
     if (extreme && fragments() === 2) badges.push('Survivant·e du mode EXTRÊME DE LA MORT QUI TUE. Respect éternel.');
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
@@ -2014,7 +2266,8 @@
     const penalty = 40 * stats.hits + (hard ? 15 : 25) * flees;
     const petBonus = Math.min(100, 5 * stats.pets);
     const sups = supsFound(), tapas = stats.tapas || 0;
-    const extraBonus = 150 * sups + Math.min(100, 20 * tapas);
+    const fish = { ...(stats.fish || {}) }, fishN = Object.values(fish).reduce((a, b) => a + b, 0);
+    const extraBonus = 150 * sups + Math.min(100, 20 * tapas) + Math.min(60, 10 * fishN) + (fish.poulpy ? 50 : 0) + (climbDone ? 50 : 0);
     const raw = Math.max(0, puzzles.reduce((s, p) => s + p.score, 0) + petBonus + extraBonus - penalty);
     const mult = extreme ? 2.5 : hard ? 1.5 : 1;
     const score = Math.round(raw * mult);
@@ -2024,7 +2277,7 @@
       : ratio >= 0.8 ? 'très honorable' : ratio >= 0.6 ? 'honorable' : 'passable (le jury a été clément)';
     const rank = ratio >= 0.95 ? 3 : ratio >= 0.8 ? 2 : ratio >= 0.6 ? 1 : 0;
     const d = {
-      rank, supsWho: SUPS.map((p) => p.found), climb: climbDone, stories: Math.min(storyNext, STORIES.length),
+      rank, supsWho: SUPS.map((p) => p.found), climb: climbDone, colin: climbDone, fish, stories: Math.min(storyNext, STORIES.length),
       name: playerName, hard, extreme, pets: stats.pets, petBonus, metro: stats.metro, sups, tapas, ghost: stats.ghost || 0, met: [...stats.met], god: !!stats.god, seconds: Math.round((stats.end - stats.start) / 1000), meters: Math.round(stats.dist / T * 10),
       hits: stats.hits, flees, bike: hasBike, bonus: otDone, puzzles, penalty, score, mention,
       date: new Date(stats.end).toISOString(),
@@ -2141,6 +2394,13 @@
       ['Encadrant·es retrouvé·es', `${d.sups || 0} / 3${d.sups ? ` · +${150 * d.sups} pts` : ''}`],
       ['Tapas sauvées du pigeon', `${d.tapas || 0} fois`],
       ['Histoires des maths écoutées sur un banc', `${d.stories || 0} / ${STORIES.length}`],
+      ['Pêche dans la Vilaine', (() => {
+        const f = d.fish || {}, n = (f.gardon || 0) + (f.perche || 0) + (f.brochet || 0) + (f.poulpy || 0);
+        if (!n) return 'pas de prise';
+        const parts = [['gardon', f.gardon], ['perche', f.perche], ['brochet', f.brochet]].filter(([, k]) => k).map(([w, k]) => plural(k, w));
+        return `${parts.join(', ')}${f.poulpy ? `${parts.length ? ', ' : ''}Poulpy !` : ''} · +${Math.min(60, 10 * n) + (f.poulpy ? 50 : 0)} pts`;
+      })()],
+      ['Colin, retrouvé en haut de la tour des maths', d.colin ? 'oui, il est venu au bar · +50 pts' : 'non'],
       ...(d.god ? [['Mode dieu (développeur)', 'oui, tricheur·se']] : []),
     ];
     if (d.extreme) rows.push(['Visites du Reviewer 2', String(d.ghost || 0)]);
@@ -2163,7 +2423,7 @@
       cat1: [NOBLECAT[0], '{c1}'], cat2: [BIGCAT[0], '{c2}'], loic: [LOIC, 'Loïc'], vero: [VERO, 'Véronique'],
       ioana: [IOANA, 'Ioana'], pigeon: [PIGEON[0], 'Pigeon'], bike: [BIKE_SIDE, 'Vélo'], metro: [METRO_ICON, 'Métro'],
       climb: [CLIMB_ICON, 'Escalade'], ghost: [GHOST, 'Reviewer 2'], rap: [RAP, 'Rapporteur'], ot: [tileCanvas('v'), 'Monge'],
-      colin: [COLIN, 'Colin'], bench: [tileCanvas('n'), 'Banc'],
+      colin: [COLIN, 'Colin'], bench: [tileCanvas('n'), 'Banc'], fish: [GARDON, 'Pêche'], poulpy: [POULPY, 'Poulpy'],
     };
     const met = (d.met || []).filter((k) => ICONS[k]);
     text('Rencontres du voyage', 297, 206, 10, true, '#2b2340', 'center');
@@ -2275,7 +2535,8 @@
     hasBike = true; otDone = true; climbDone = true;
     stats.tapas = Math.max(1, stats.tapas || 0); stats.metro = Math.max(1, stats.metro || 0); stats.pets = Math.max(3, stats.pets);
     storyNext = Math.max(storyNext, STORIES.length);
-    ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'colin', 'bench', 'ot', 'rap'].concat(extreme ? ['ghost'] : []).forEach(meet);
+    stats.fish = { gardon: 1, perche: 1, brochet: 1, poulpy: 1, ...(stats.fish || {}) };
+    ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'colin', 'bench', 'fish', 'poulpy', 'ot', 'rap'].concat(extreme ? ['ghost'] : []).forEach(meet);
     const labels = ['{c1} · partitionnement', '{c2} · Gromov-Wasserstein', 'Bonus · transport optimal', 'Easter egg · escalade', 'Rapporteur · anomalie']
       .concat(extreme ? ['Rapporteur · question 2', 'Rapporteur · question 3'] : []);
     for (const label of labels.map(N)) if (!stats.puzzles.some((p) => p.label === label)) stats.puzzles.push({ label, time: 30, wrong: 0, hints: 0, skipped: false });
@@ -2312,7 +2573,8 @@
       return;
     }
     if (state === 'puzzle' && puzzle) {
-      if (e.code === 'Escape') { quitPuzzle(); e.preventDefault(); return; }
+      if (e.code === 'Escape') { quitPuzzle(puzzle.quitMsg && puzzle.quitMsg()); e.preventDefault(); return; }
+      if (puzzle.action && puzzle.wonT < 0 && !e.repeat && (e.code === 'Space' || e.code === 'Enter')) { puzzle.action(); e.preventDefault(); return; }
       if (puzzle.press && puzzle.wonT < 0 && !e.repeat) {
         if (e.code === 'ArrowLeft' || e.code === 'KeyA') { puzzle.press(0); e.preventDefault(); return; }
         if (e.code === 'ArrowRight' || e.code === 'KeyD') { puzzle.press(1); e.preventDefault(); return; }
@@ -2459,7 +2721,8 @@
     return c.toDataURL('image/png');
   }
   if (new URLSearchParams(location.search).has('test')) window.__invite = {
-    art, snapshot, BENCHES, colin, world, get storyNext() { return storyNext; }, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
+    art, snapshot, BENCHES, colin, world, COLIN_DIR, PIER, FISH, POULPY,
+    perf(n = 200) { const t0 = performance.now(); for (let i = 0; i < n; i++) { update(1 / 60); render(); } return (performance.now() - t0) / n; }, get storyNext() { return storyNext; }, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
     get state() { return state; }, get hasBike() { return hasBike; }, get otDone() { return otDone; },
     player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
   };

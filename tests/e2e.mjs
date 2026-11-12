@@ -129,6 +129,18 @@ async function play(browser, tag, opts, mode) {
     check(after.join() === before.join(), `${tag}: run not resumed after lost pictures: ${before} -> ${after}`);
   }
 
+  // Fishing from the pier: wait for the bite, strike with a real tap or Space, then put the rod away.
+  await place(() => { __invite.player.x = __invite.PIER.x; __invite.player.y = __invite.PIER.y; });
+  await p.waitForFunction(() => __invite.state !== 'play', null, { timeout: 3000 });
+  await drain();
+  await p.waitForFunction(() => __invite.puzzle && __invite.puzzle.phase === 'bite', null, { timeout: 8000 });
+  if (opts.hasTouch) { const [W, H] = await ev(() => [__invite.W, __invite.H]); await tapScreen(W / 2, H / 2); } else await p.keyboard.press('Space');
+  check(await ev(() => __invite.puzzle.phase) === 'caught', `${tag}: the strike did not catch anything`);
+  await p.keyboard.press('Escape');
+  check(await ev(() => __invite.state === 'play' && Object.values(__invite.stats.fish || {}).reduce((a, b) => a + b, 0) === 1), `${tag}: catch not counted`);
+  check(!(await ev(() => __invite.stats.puzzles.some((q) => q.label === 'Pêche'))), `${tag}: fishing scored as a puzzle`);
+  await place(() => { __invite.player.y -= 40; });
+
   // Rapporteur: tap the anomalous trajectory; in extreme mode quit at question 2, come back, finish the exam.
   const atRap = async () => { await place(() => { __invite.player.x = __invite.rap.x; __invite.player.y = __invite.rap.y + 60; }); await place(() => { __invite.player.x = __invite.rap.x; __invite.player.y = __invite.rap.y + 22; }); await drain(); };
   const answer = async (k) => { // quiz boxes are in screen coordinates

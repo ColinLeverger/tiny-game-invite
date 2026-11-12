@@ -21,7 +21,9 @@ Le jeu marche sur téléphone, en portrait comme en paysage, et sur ordinateur a
 - Le métro mène jusqu'à Villejean. On peut caresser les chats qui suivent Ketsia.
 - Des bancs : s'y arrêter un instant donne une petite histoire des mathématiques (dix en tout).
 - Quête annexe : retrouver les trois encadrant·es de Ketsia quelque part dans Rennes.
-- Musique et bruitages 8-bit (coupés par défaut), un pigeon voleur de tapas, une photo souvenir en PNG.
+- Musique et bruitages 8-bit (coupés par défaut) : un morceau par scène (ville, puzzles, escalade,
+  métro avec ses bruits de rails, pêche, fête au bar). Un pigeon voleur de tapas, une photo souvenir en PNG.
+- Un ponton de pêche sur la Vilaine : gardons, perches, brochets… et peut-être Poulpy le poulpe.
 - Trois modes : Normal, Difficile, et un troisième dont on garde la surprise.
 - Chaque puzzle a trois boutons : Quitter (ou Échap), Aide (guidage pas à pas) et Valider (après 15 s).
 - Il y a aussi un easter egg, que ce README ne dévoile pas.
