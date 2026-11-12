@@ -2021,11 +2021,6 @@
   const GUESTS = Array.from({ length: 14 }, (_, i) => makeSprite(i % 3 === 1 ? GUEST_LONG : GUEST_ROWS, {
     h: HAIRS[i % HAIRS.length], S: SKINS[(i * 3) % SKINS.length], e: '#2b2340', n: '#00000022', m: '#a8605a',
     T: SHIRTS[(i * 7) % SHIRTS.length], P: ['#2c3a5e', '#3a3f4a', '#5a3420'][i % 3], K: '#1e1a22' }));
-  // The DJ: blue glasses and headphones.
-  const DJ = makeSprite(['...kkkkkkkkkk...', '..khhhhhhhhhhk..', '..khSSSSSSSShk..', '...SBBBSSBBBS...', '...SSSSSSSSSS...',
-    '...SSSSnnSSSS...', '....SSSmmSSS....', '.....SSSSSS.....', '...TTTTTTTTTT...', '..TTTTTTTTTTTT..',
-    '..TTTTTTTTTTTT..', '..STTTTTTTTTTS..', '...TTTTTTTTTT...', '...PPPP..PPPP...', '...PPPP..PPPP...', '...KKKK..KKKK...'],
-  { k: '#1e1a22', h: '#2b2340', S: '#e8b896', B: '#2e86c1', n: '#d9a083', m: '#a8605a', T: '#1abc9c', P: '#2c3a5e', K: '#1e1a22' });
   // Colin: tall, hair down to the shoulders, bright blue glasses, mutton chops, colourful clothes,
   // and a guitar (no case) slung across his back: the neck over his shoulder, the body at his hip.
   const COLIN_PAL = { h: '#5a3a22', c: '#3e2616', S: '#f0c3a5', n: '#d9a083', m: '#a8605a', B: '#2e6fd8', e: '#1e1a22',
@@ -2061,7 +2056,13 @@
     centered(INV.b || 'Le bar', W / 2, 32, '#f2c14b', 9);
     // DJ booth (left) and counter with the tapas (right)
     const bob = (ph, amp = 3) => -Math.abs(Math.sin(t * 5 + ph)) * amp;
-    ctx.drawImage(DJ, 18, Math.round(floorY - 30 + bob(0, 2)));
+    { // Colin is the DJ: headphones on, a little heart overhead
+      const dy = Math.round(floorY - 34 + bob(0, 2));
+      ctx.drawImage(COLIN, 18, dy);
+      ctx.fillStyle = '#1e1a22'; ctx.fillRect(22, dy, 10, 1); ctx.fillRect(21, dy + 1, 1, 3); ctx.fillRect(32, dy + 1, 1, 3);
+      ctx.fillStyle = '#e2505e'; ctx.fillRect(20, dy + 4, 2, 3); ctx.fillRect(32, dy + 4, 2, 3);
+      textShadow('♥', 27, dy - 3 + Math.sin(t * 3) * 1.2, '#ff6b9a', 8);
+    }
     ctx.fillStyle = '#1e1a22'; ctx.fillRect(8, floorY - 16, 46, 16); ctx.fillStyle = '#3a3f4a'; ctx.fillRect(8, floorY - 16, 46, 2);
     for (const dx of [16, 40]) { ctx.fillStyle = '#2b2340'; ctx.beginPath(); ctx.arc(dx, floorY - 10, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#e2505e'; ctx.fillRect(dx - 0.5, floorY - 10.5, 1, 1); }
     if (Math.floor(t * 2) % 2) textShadow('♪', 30 + Math.sin(t) * 6, floorY - 36 - (t * 10 % 12), '#f2c14b', 8);
@@ -2074,7 +2075,7 @@
     // Everyone dances: guests, the found supervisors, the cats, Ketsia in the middle.
     const perRow = Math.max(5, Math.floor(W / 30));
     const back = GUESTS.slice(0, perRow).map((g, k) => (k === 1 ? CHOUX[0] : k === 4 ? CHOUX[1] : g));
-    const middle = [GUESTS[8], NOBLECAT[0], KS.d[0], ...(climbDone ? [COLIN] : []), BIGCAT_L, GUESTS[9]];
+    const middle = [GUESTS[8], NOBLECAT[0], KS.d[0], BIGCAT_L, GUESTS[9]]; // Colin is at the decks
     const front = [GUESTS[10], ...SUPS.filter((p) => p.found && p.key !== 'ioana').map((p) => p.img), CHOUX[2], GUESTS[12], GUESTS[13]].slice(0, perRow);
     const rows = portrait ? [[back, floorY + 18], [middle, floorY + 44], [front, floorY + 72], [GUESTS.slice(4, 4 + perRow), floorY + 100]]
       : [[back, floorY + 16], [middle, floorY + 40], [front, floorY + 64]];
@@ -2089,7 +2090,6 @@
           ctx.beginPath(); ctx.moveTo(hx - 3, top + 1); ctx.lineTo(hx + 3, top + 1); ctx.lineTo(hx, top - 6); ctx.fill();
           ctx.fillStyle = '#ffffff'; ctx.fillRect(hx - 0.5, top - 7, 1.5, 1.5);
         }
-        if (img === COLIN) textShadow('♥', x + 9, top - 2 + Math.sin(t * 3) * 1.2, '#ff6b9a', 8);
       });
     });
     for (let k = 0; k < 28; k++) { // confetti
@@ -2099,7 +2099,7 @@
     }
     if (SUPS[2].found) { // Ioana does laps of the dance floor on her bike
       const ix = W / 2 + Math.sin(t * 0.9) * W * 0.36, img = Math.cos(t * 0.9) < 0 ? flipped(IOANA) : IOANA;
-      ctx.drawImage(img, Math.round(ix - 13), Math.round(floorY + (portrait ? 124 : 78) - 22));
+      ctx.drawImage(img, Math.round(ix - 13), Math.round(floorY + (portrait ? 124 : 70) - 22)); // clear of the bottom edge
     }
     if (!cardShown && Math.floor(t * 2) % 2) centered('Touche l\'écran pour voir ton invitation', W / 2, H - 6, '#f4ead5', 7);
   }
@@ -2724,6 +2724,6 @@
     art, snapshot, BENCHES, colin, world, COLIN_DIR, PIER, FISH, POULPY,
     perf(n = 200) { const t0 = performance.now(); for (let i = 0; i < n; i++) { update(1 / 60); render(); } return (performance.now() - t0) / n; }, get storyNext() { return storyNext; }, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
     get state() { return state; }, get hasBike() { return hasBike; }, get otDone() { return otDone; },
-    player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
+    player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, godMode, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,
   };
 })();

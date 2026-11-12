@@ -189,6 +189,13 @@ async function robustness(browser) {
   await p.reload();
   await p.click('#skipLink');
   await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 });
+  // Every challenge done (developer god mode): every encounter must reach the PDF's "Rencontres du voyage".
+  await p.goto(`${BASE}/index.html?test`); await p.fill('#nameInput', 'Iris'); await p.click('button[type=submit]');
+  await p.waitForFunction(() => window.__invite && __invite.state === 'dialog');
+  const full = await p.evaluate(() => { __invite.godMode(); const d = __invite.diploma(); const pdf = __invite.buildPdf(d); return { met: d.met, pdf: new TextDecoder('latin1').decode(pdf) }; });
+  const ALL = ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'colin', 'bench', 'fish', 'poulpy', 'ot', 'rap'];
+  check(ALL.every((k) => full.met.includes(k)), `robustness: encounters missing from a full run: ${ALL.filter((k) => !full.met.includes(k))}`);
+  for (const name of ['Colin', 'Poulpy', 'Banc', 'Ioana', 'Escalade', 'Rapporteur']) check(full.pdf.includes(`(${name})`), `robustness: ${name} missing from the full-run PDF`);
   check(errors.length === 0, `robustness: page errors with a malformed link: ${errors.join(' | ')}`);
   await p.close();
   console.log('e2e robustness: OK');
