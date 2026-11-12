@@ -192,19 +192,40 @@
     f(5, 6, 2, 2, '#f3c9ab'); f(5, 8, 2, 3, '#3f8a5a'); f(4, 11, 1, 2, '#4a3832'); f(7, 11, 1, 2, '#4a3832'); f(6, 0, 1, 6, '#ffffff');
   });
 
-  // The Vilaine's fish (a roach, a perch, a pike) and Poulpy the octopus, who has no business in a river.
-  const GARDON = makeSprite(['....SSSSSS......', '..SSssssssSS..rr', '.SsRessssssSSrr.', 'Sssssssssssssrr.', 'Swwwwwwwwwwwsrr.', '.SwwwwwwwwwSS.rr', '..SSrwwwrSS.....', '....SSSSSS......'],
-    { S: '#5f6f80', s: '#c9d4de', w: '#eef2f6', r: '#e2505e', R: '#e2505e', e: '#1e1a22' });
-  const PERCHE = makeSprite(['...rr.rr.r......', '..oooooooooo....', '.oyeybyybyyyo.rr', 'oyyyybyybyyyyorr', 'owwwwbwwbwwwwor.', '.owwwwwwwwwwo.rr', '..oorroorroo....', '................'],
-    { o: '#3d5a2a', y: '#b8c24a', b: '#3d5a2a', w: '#e8e4b0', r: '#e8742a', e: '#1e1a22' });
-  const BROCHET = makeSprite(['..............rr........', '....oooooooooooooooo....', '..oogelgggllggglgggo.rr.', 'ooggggggglgggggglgggorrr', 'owwwwwwwwwwwwwwwwwwwworr', '.ooowwwwwwwwwwwwwwwoo.rr', '....oooorroooooooo......'],
-    { o: '#2f4a2a', g: '#5f8a3a', l: '#c8d870', w: '#e0e4c0', e: '#1e1a22', r: '#8a6a2a' });
+  // What Ketsia fishes out of the Vilaine (she is vegetarian: no fish), and Poulpy the octopus, who tugs the line to tell jokes.
+  const GALETTE = makeSprite(['......fff.........', '.SSSBBBBBBBBBBB.ff', 'SsweBbbdbbbbdbbBf.', 'SsssBbbbbdbbbbbBff', 'SsssBbdbbbbbdbbB.f', '.SSSBBBBBBBBBBB...', '.......ff..ff.....'],
+    { B: '#7a4a1e', b: '#c08a4a', d: '#8a5a2a', S: '#8a3a30', s: '#c0605a', w: '#ffffff', e: '#1e1a22', f: '#6fb3d9' });
+  const VELO = canvasOf(18, 12, (f, x) => {
+    x.drawImage(BIKE_SIDE, 0, 0);
+    [[3, 8, 3], [5, 9, 3], [12, 8, 4], [15, 9, 2], [9, 5, 3]].forEach(([i, j, h]) => f(i, j, 1, h, '#3f8a49')); // weeds
+    f(7, 10, 1, 1, '#6fb3d9'); f(14, 11, 1, 1, '#6fb3d9');
+  });
+  const CIDRE = makeSprite(['...cc...', '...kk...', '...gg...', '...gg...', '..gggg..', '.gGgggg.', 'gGgggggg', 'gwwwwwwg', 'gwyyyywg', 'gwyrrywg', 'gwyrrywg', 'gwyyyywg', 'gwwwwwwg', 'gGgggggg', 'gGgggggg', 'gggggggg', 'gggggggg', '.gggggg.'],
+    { c: '#c8a060', k: '#d23c3c', g: '#3f7a3a', G: '#8fd67a', w: '#f4ead5', y: '#f2c14b', r: '#d23c3c' });
+  const THESE = makeSprite(['..wwwwwwwwwwww..', '..wppppppppppws.', '..wpkkkkkkkkpws.', '..wppppppppppws.', '..wpllllllllpws.', '..wppppppppppwb.', '..wpllllllllpws.', '..wppppppppprwb.', '..wpllllprprpws.', '..wppppppprprws.', '..wpppppprpprws.', '..wwwwwwwwwwww..', '...b...b...b....'],
+    { w: '#b8b0a0', p: '#efe8d6', k: '#2b2340', l: '#8a8478', r: '#d23c3c', b: '#6fb3d9', s: '#d8d0bc' });
+  const TRIATHLETE = makeSprite(['.....RRRRRR.......', '....RRRRRRRR......', '....RRwwRRRR...SS.', '...kBBkkkBBk...SS.', '....SeSSSeSS...SS.', '....SSSSSSSS...S..', '....SSSmmmSS..SS..', '.....SSSSSS..SS...', '..~~~~~~~~~~~~~~~.', '.~~~~~~~~~~~~~~~~~'],
+    { R: '#d23c3c', w: '#ffffff', k: '#1e1a22', B: '#6fd0f0', S: '#f0c3a5', e: '#1e1a22', m: '#7a2a2a', '~': '#3d78c0' });
   const POULPY = makeSprite(['....PPPPPP....', '..PPppppppPP..', '.PppppppppppP.', 'PppwwppppwwppP', 'PppweppppewppP', 'PpcppppppppcpP', 'PpppppmmpppppP', '.PppppppppppP.', '.pp.pp..pp.pp.', 'pp..pp..pp..pp', 'p...p.pp.p...p', '.pp..p..p..pp.'],
     { P: '#9a3a6a', p: '#e86a9a', w: '#ffffff', e: '#1e1a22', c: '#ffb0c8', m: '#9a3a6a' });
-  const FISH = [
-    { key: 'gardon', img: GARDON, name: 'Un gardon', cm: [12, 25], p: 0.5 },
-    { key: 'perche', img: PERCHE, name: 'Une perche', cm: [15, 35], p: 0.32 },
-    { key: 'brochet', img: BROCHET, name: 'Un brochet !', cm: [45, 90], p: 0.18 },
+  // name and sub: the catch screen; a, one, many: the words for the card and the diploma.
+  const CATCHES = [
+    { key: 'galette', a: 'une galette-saucisse', img: GALETTE, p: 0.3, one: 'galette-saucisse', many: 'galettes-saucisses', name: 'Une galette-saucisse… à nageoires !',
+      sub: 'Le poisson typique de Rennes. Ketsia, végétarienne, la rend à la Vilaine avec tout son respect.' },
+    { key: 'cidre', a: 'une bouteille de cidre', img: CIDRE, p: 0.25, one: 'bouteille de cidre', many: 'bouteilles de cidre', name: 'Une bouteille de cidre !',
+      sub: 'Bien fraîche, pour la fête de ce soir. Youpi ! Elle file au bar.' },
+    { key: 'velo', a: 'un vélo', img: VELO, p: 0.22, one: 'vélo', many: 'vélos', name: 'Un vélo !',
+      sub: 'Ça arrive plus souvent qu\'on ne croit, dans la Vilaine. Direction la station la plus proche.' },
+    { key: 'these', a: 'le chapitre 3 de la thèse (v1)', img: THESE, p: 0.15, one: 'chapitre 3', many: 'chapitres 3', name: 'Le chapitre 3 de la thèse, version 1',
+      sub: 'Celui que Ketsia croyait avoir supprimé. Elle le rejette à l\'eau, très vite.' },
+    { key: 'triathlete', a: 'un triathlète', img: TRIATHLETE, p: 0.08, one: 'triathlète', many: 'triathlètes', name: 'Un triathlète !',
+      sub: 'Trente-quatre ans, bonnet de bain, furieux : « Mon record ! » Il repart en crawl vers le Thabor.' },
+  ];
+  const POULPY_JOKES = [
+    'Un poulpe entre dans un bar et commande huit cidres. « C\'est pour qui ? » « Pour mes bras. »',
+    'Mon chiffre préféré ? Le huit. Couché, c\'est l\'infini : j\'ai toujours un bras d\'avance.',
+    'J\'ai tenté le transport optimal : huit bras, un seul vélo. Le problème était mal posé.',
+    'Pourquoi je ne fais pas de thèse ? Avec huit bras, j\'aurais huit directeurs de thèse.',
   ];
 
   // Vehicles (drawn facing right, rotated/flipped per lane).
@@ -431,7 +452,7 @@
     { t: 'Centre-ville', x: 10 * T, y: 7.1 * T },
     { t: 'BAR', x: 10 * T, y: 0.8 * T, c: '#f2c14b' },
     { t: 'La Vilaine', x: 31.5 * T, y: 20.2 * T },
-    { t: 'Ponton de pêche', x: 28.5 * T, y: 17.6 * T },
+    { t: 'Ponton', x: 28.5 * T, y: 17.6 * T },
     { t: 'Passerelle', x: 13 * T, y: 18.3 * T },
     { t: 'Métro Colombier', x: 11.5 * T, y: 22.4 * T },
   ];
@@ -1374,7 +1395,7 @@
     return colin;
   }
 
-  /* ----- fishing in the Vilaine, from the pier: three kinds of fish, and Poulpy ----- */
+  /* ----- fishing things out of the Vilaine, from the pier (no fish: Ketsia is vegetarian), and Poulpy ----- */
   const PIER = { x: 28 * T + 8, y: 19 * T + 10, t: 0, sat: false };
   const fishCaught = () => Object.values(stats.fish || {}).reduce((a, b) => a + b, 0);
   function updatePier(dt) {
@@ -1383,38 +1404,41 @@
     if (PIER.sat || player.moving) { PIER.t = 0; return false; }
     if ((PIER.t += dt) < 0.4) return false;
     PIER.sat = true; meet('fish');
-    say(fishCaught() ? [['Ketsia', 'On relance la ligne ?']] : [
+    say(fishCaught() ? [['Ketsia', 'On relance la ligne ? Qui sait ce qui traîne au fond.']] : [
       ['', 'Une canne à pêche attend au bout du ponton. Personne ne dira rien si Ketsia l\'emprunte un moment.'],
-      ['Ketsia', 'Une petite pause pêche dans la Vilaine ? Il paraît qu\'il y a des gardons, des perches… et même des brochets.'],
+      ['Ketsia', 'Pêcher des poissons ? Jamais, je suis végétarienne. Mais on repêche des trucs incroyables dans la Vilaine…'],
     ], () => startPuzzle(makeFishing(), () => {}, () => {}));
     return true;
   }
   function makeFishing() {
-    let phase = 'wait', t = 0, wait = 1.5 + rnd() * 2.2, catchFish = null, catchCm = 0;
+    let phase = 'wait', t = 0, wait = 1.5 + rnd() * 2.2, catchFish = null, joke = 0;
     const counts = () => fishCaught();
     const cast = () => { phase = 'wait'; t = 0; wait = 1.2 + rnd() * 2.5; };
     const pick = () => {
       const poulpy = (stats.fish && stats.fish.poulpy) || 0;
-      if (rnd() < (poulpy ? 0.04 : counts() >= 3 ? 0.3 : 0.08)) return { key: 'poulpy', img: POULPY, name: poulpy ? 'Poulpy, encore lui !' : 'Poulpy le poulpe !', cm: [40, 40] };
+      if (rnd() < (poulpy ? 0.12 : counts() >= 3 ? 0.3 : 0.08)) {
+        const j = POULPY_JOKES[joke++ % POULPY_JOKES.length];
+        return { key: 'poulpy', img: POULPY, name: poulpy ? 'Poulpy tire encore sur la ligne !' : 'Poulpy le poulpe tire sur la ligne !', sub: `« ${j} »` };
+      }
       let r = rnd();
-      for (const f of FISH) { if (r < f.p) return f; r -= f.p; }
-      return FISH[0];
+      for (const f of CATCHES) { if (r < f.p) return f; r -= f.p; }
+      return CATCHES[0];
     };
     return {
-      title: 'La Vilaine · Pêche', label: 'Pêche', noGuide: true, free: true,
-      help: ['Attends que le bouchon plonge, puis touche l\'écran (ou Espace) pour ferrer.', 'Trop tôt, le poisson file. Trop tard aussi.'],
-      quitMsg: () => `Tu ranges la canne. ${counts() ? `Prises : ${counts()}.` : 'Rien cette fois… les poissons font la fête aussi.'}`,
+      title: 'La Vilaine · Repêchage', label: 'Repêchage', noGuide: true, free: true,
+      help: ['Attends que le bouchon plonge, puis touche l\'écran (ou Espace) pour ferrer.', 'Trop tôt, ça file. Trop tard aussi.'],
+      quitMsg: () => `Tu ranges la canne. ${counts() ? `Trouvailles : ${counts()}.` : 'Rien cette fois… la Vilaine garde ses secrets.'}`,
       get phase() { return phase; },
       tick(dt) {
         t += dt;
         if (phase === 'wait' && t > wait) { phase = 'bite'; t = 0; SFX.coo(); }
-        else if (phase === 'bite' && t > (extreme ? 0.55 : 0.9)) { phase = 'miss'; t = 0; this.msg = 'Raté ! Il a mangé l\'appât et filé.'; }
+        else if (phase === 'bite' && t > (extreme ? 0.55 : 0.9)) { phase = 'miss'; t = 0; this.msg = 'Raté ! Ça a filé au fond.'; }
         else if (phase === 'miss' && t > 1.4) { this.msg = ''; cast(); }
       },
       action() {
-        if (phase === 'wait') { this.msg = 'Trop tôt ! Ça a fait fuir le poisson.'; phase = 'miss'; t = 0; return; }
+        if (phase === 'wait') { this.msg = 'Trop tôt ! Ça a filé.'; phase = 'miss'; t = 0; return; }
         if (phase === 'bite') {
-          catchFish = pick(); catchCm = Math.round(catchFish.cm[0] + rnd() * (catchFish.cm[1] - catchFish.cm[0]));
+          catchFish = pick();
           stats.fish = stats.fish || {}; stats.fish[catchFish.key] = (stats.fish[catchFish.key] || 0) + 1;
           if (catchFish.key === 'poulpy') meet('poulpy');
           phase = 'caught'; t = 0; this.msg = ''; SFX.win(); return;
@@ -1428,7 +1452,7 @@
         ctx.fillStyle = '#ffcf6a'; ctx.beginPath(); ctx.arc(W - 30, top + 10, 7, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#3d78c0'; ctx.fillRect(0, water, W, bottom - water);
         ctx.fillStyle = '#2d5f9e'; for (let k = 0; k < 6; k++) ctx.fillRect((k * 61 + time * 8) % W, water + 8 + k * 9, 14, 1);
-        for (let k = 0; k < 3; k++) { // fish shadows going by
+        for (let k = 0; k < 3; k++) { // shadows going by (free fish, left in peace)
           const fx = (k * 97 + time * (10 + k * 4)) % (W + 40) - 20, fy = water + 18 + k * 14;
           if (fy < bottom - 4) { ctx.fillStyle = 'rgba(20,40,80,.45)'; ctx.fillRect(fx, fy, 10, 3); ctx.fillRect(fx + 10, fy - 1, 3, 5); }
         }
@@ -1442,16 +1466,18 @@
           ctx.fillStyle = '#e2505e'; ctx.fillRect(fx - 2, fy - 3, 4, 3); ctx.fillStyle = '#ffffff'; ctx.fillRect(fx - 2, fy, 4, 2);
           if (phase === 'bite') centered('!', fx, fy - 12, '#f2c14b', 14);
         } else {
-          const f = catchFish, sc = f.img.width > 20 ? 3 : 4;
-          ctx.fillStyle = 'rgba(20,16,32,.82)'; ctx.fillRect(10, top + 4, W - 20, bottom - top - 8);
-          ctx.drawImage(f.img, Math.round(W / 2 - f.img.width * sc / 2), Math.round(top + 22), f.img.width * sc, f.img.height * sc);
-          const ty = top + 30 + f.img.height * sc;
-          centered(f.name, W / 2, ty, '#f2c14b', 10);
-          centered(f.key === 'poulpy' ? 'Un poulpe dans la Vilaine ?! Il te fait un clin d\'œil et replonge.' : `${catchCm} cm · relâché dans la Vilaine`, W / 2, ty + 13, '#f4ead5', 7);
-          if (t > 0.4) centered('Touche pour relancer la ligne', W / 2, ty + 26, '#c9c3dc', 7);
+          const f = catchFish, sc = Math.min(4, Math.floor(((bottom - top) * 0.36) / f.img.height), Math.floor((W - 40) / f.img.width));
+          ctx.fillStyle = 'rgba(20,16,32,.86)'; ctx.fillRect(10, top + 4, W - 20, bottom - top - 8);
+          ctx.drawImage(f.img, Math.round(W / 2 - f.img.width * sc / 2), Math.round(top + 14), f.img.width * sc, f.img.height * sc);
+          let ty = top + 26 + f.img.height * sc;
+          ctx.font = `bold 9px ${FONT}`;
+          for (const l of wrap(f.name, W - 30)) { centered(l, W / 2, ty, '#f2c14b', 9); ty += 11; }
+          ctx.font = `bold 7px ${FONT}`; ty += 2;
+          for (const l of wrap(f.sub, W - 34)) { centered(l, W / 2, ty, '#f4ead5', 7); ty += 9; }
+          if (t > 0.4) centered('Touche pour relancer la ligne', W / 2, ty + 5, '#c9c3dc', 7);
         }
         const c = stats.fish || {};
-        status(`Prises : ${counts()}  ·  gardons ${c.gardon || 0} · perches ${c.perche || 0} · brochets ${c.brochet || 0}${c.poulpy ? ' · Poulpy ♥' : ''}`);
+        status(`Trouvailles : ${counts()}${c.poulpy ? ' · Poulpy ♥' : ''}`);
       },
     };
   }
@@ -1900,7 +1926,7 @@
       li((stats.tapas || 0) > 0, `Le pigeon voleur des tapas de ce soir, au centre-ville (sauvées : ${stats.tapas || 0} fois)`),
       li((stats.metro || 0) > 0, `Le métro : il te mène jusqu'à Villejean (${stats.metro || 0} trajets)`),
       li(storyNext >= STORIES.length, `Les bancs : assieds-toi un instant pour une histoire des maths (${Math.min(storyNext, STORIES.length)}/${STORIES.length})`),
-      li(fishCaught() > 0, `La pêche : un ponton t'attend sur la Vilaine (${fishCaught()} prises${(stats.fish || {}).poulpy ? ', Poulpy compris' : ''})`),
+      li(fishCaught() > 0, `Le repêchage : un ponton t'attend sur la Vilaine (${fishCaught()} trouvailles${(stats.fish || {}).poulpy ? ', Poulpy compris' : ''})`),
       li(climbDone, climbDone ? 'Secret trouvé : la tour des maths… et Colin' : 'Un secret se cache sur le campus… (indice : il faut lever les yeux)'),
       '</ul><h3>Commandes</h3><p>Flèches, ZQSD, ou toucher la carte pour marcher. Maj ou bouton B : avancer à pas de loup.',
       ' Toucher un chat qui te suit (ou Espace) : une caresse. ✥ : croix directionnelle. ♪ : le son et la musique.</p>',
@@ -2208,7 +2234,10 @@
     if ((stats.tapas || 0) > 0) badges.push(`Tu as sauvé ${stats.tapas > 1 ? `${stats.tapas} fois` : 'une fois'} les tapas de ce soir des griffes du pigeon voleur.`);
     if (climbDone) badges.push('Badge secret : tu as grimpé la tour des maths, et Colin est descendu avec toi.');
     const fishN = Object.values(stats.fish || {}).reduce((a, b) => a + b, 0);
-    if (fishN) badges.push(`Pêche dans la Vilaine : ${fishN > 1 ? `${fishN} prises` : 'une prise'}${(stats.fish || {}).poulpy ? ', dont Poulpy le poulpe (si, si).' : '.'}`);
+    if (fishN) {
+      const f = stats.fish || {}, what = CATCHES.filter((c) => f[c.key]).map((c) => (f[c.key] > 1 ? `${f[c.key]} ${c.many}` : c.a));
+      badges.push(`Repêché dans la Vilaine : ${what.join(', ') || 'rien de solide'}${f.poulpy ? ', et Poulpy le poulpe t\'a raconté une blague' : ''}.`);
+    }
     if (otDone) badges.push('Badge Monge-Kantorovich : tu as rééquilibré les vélos de Rennes au moindre coût.');
     if (extreme && fragments() === 2) badges.push('Survivant·e du mode EXTRÊME DE LA MORT QUI TUE. Respect éternel.');
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
@@ -2248,7 +2277,7 @@
     const pts = d.parts || {};
     if (pts.sups) row(`Encadrant·es (${d.sups}/3)`, `+${pts.sups}`);
     if (pts.colin) row('Colin, en haut de la tour', `+${pts.colin}`);
-    if (pts.fish) row('Pêche dans la Vilaine', `+${pts.fish}`);
+    if (pts.fish) row('Repêchage dans la Vilaine', `+${pts.fish}`);
     if (pts.poulpy) row('Poulpy !', `+${pts.poulpy}`);
     if (pts.tapas) row('Tapas sauvées du pigeon', `+${pts.tapas}`);
     if (d.petBonus) row('Caresses aux chats', `+${d.petBonus}`);
@@ -2442,10 +2471,10 @@
       ['Encadrant·es retrouvé·es', `${d.sups || 0} / 3${d.sups ? ` · +${150 * d.sups} pts` : ''}`],
       ['Tapas sauvées du pigeon', `${d.tapas || 0} fois`],
       ['Histoires des maths écoutées sur un banc', `${d.stories || 0} / ${STORIES.length}`],
-      ['Pêche dans la Vilaine', (() => {
-        const f = d.fish || {}, n = (f.gardon || 0) + (f.perche || 0) + (f.brochet || 0) + (f.poulpy || 0);
-        if (!n) return 'pas de prise';
-        const parts = [['gardon', f.gardon], ['perche', f.perche], ['brochet', f.brochet]].filter(([, k]) => k).map(([w, k]) => plural(k, w));
+      ['Repêché dans la Vilaine', (() => {
+        const f = d.fish || {}, n = Object.values(f).reduce((a, b) => a + b, 0);
+        if (!n) return 'rien';
+        const parts = CATCHES.filter((c) => f[c.key]).map((c) => `${f[c.key]} ${f[c.key] > 1 ? c.many : c.one}`);
         return `${parts.join(', ')}${f.poulpy ? `${parts.length ? ', ' : ''}Poulpy !` : ''} · +${Math.min(60, 10 * n) + (f.poulpy ? 50 : 0)} pts`;
       })()],
       ['Colin, retrouvé en haut de la tour des maths', d.colin ? 'oui, il est venu au bar · +50 pts' : 'non'],
@@ -2471,7 +2500,7 @@
       cat1: [NOBLECAT[0], '{c1}'], cat2: [BIGCAT[0], '{c2}'], loic: [LOIC, 'Loïc'], vero: [VERO, 'Véronique'],
       ioana: [IOANA, 'Ioana'], pigeon: [PIGEON[0], 'Pigeon'], bike: [BIKE_SIDE, 'Vélo'], metro: [METRO_ICON, 'Métro'],
       climb: [CLIMB_ICON, 'Escalade'], ghost: [GHOST, 'Reviewer 2'], rap: [RAP, 'Rapporteur'], ot: [tileCanvas('v'), 'Monge'],
-      colin: [COLIN, 'Colin'], bench: [tileCanvas('n'), 'Banc'], fish: [GARDON, 'Pêche'], poulpy: [POULPY, 'Poulpy'],
+      colin: [COLIN, 'Colin'], bench: [tileCanvas('n'), 'Banc'], fish: [GALETTE, 'Repêchage'], poulpy: [POULPY, 'Poulpy'],
     };
     const met = (d.met || []).filter((k) => ICONS[k]);
     text('Rencontres du voyage', 297, 206, 10, true, '#2b2340', 'center');
@@ -2583,7 +2612,7 @@
     hasBike = true; otDone = true; climbDone = true;
     stats.tapas = Math.max(1, stats.tapas || 0); stats.metro = Math.max(1, stats.metro || 0); stats.pets = Math.max(3, stats.pets);
     storyNext = Math.max(storyNext, STORIES.length);
-    stats.fish = { gardon: 1, perche: 1, brochet: 1, poulpy: 1, ...(stats.fish || {}) };
+    stats.fish = { galette: 1, cidre: 1, velo: 1, these: 1, triathlete: 1, poulpy: 1, ...(stats.fish || {}) };
     ['cat1', 'cat2', 'loic', 'vero', 'ioana', 'pigeon', 'bike', 'metro', 'climb', 'colin', 'bench', 'fish', 'poulpy', 'ot', 'rap'].concat(extreme ? ['ghost'] : []).forEach(meet);
     const labels = ['{c1} · partitionnement', '{c2} · Gromov-Wasserstein', 'Bonus · transport optimal', 'Easter egg · escalade', 'Rapporteur · anomalie']
       .concat(extreme ? ['Rapporteur · question 2', 'Rapporteur · question 3'] : []);
@@ -2771,7 +2800,7 @@
     return c.toDataURL('image/png');
   }
   if (new URLSearchParams(location.search).has('test')) window.__invite = {
-    art, snapshot, BENCHES, colin, world, COLIN_DIR, PIER, FISH, POULPY,
+    art, snapshot, BENCHES, colin, world, COLIN_DIR, PIER, CATCHES, POULPY,
     perf(n = 200) { const t0 = performance.now(); for (let i = 0; i < n; i++) { update(1 / 60); render(); } return (performance.now() - t0) / n; }, get storyNext() { return storyNext; }, get mode() { return extreme ? 'extreme' : hard ? 'hard' : 'normal'; },
     get state() { return state; }, get hasBike() { return hasBike; }, get otDone() { return otDone; },
     player, cats, rap, keys, stats, get rapStage() { return rapStage; }, get soundOn() { return soundOn; }, badgeInfo, badgeCanvas, STATIONS, SUPS, pigeon, ghost, meet, chooseMetro, setSound, get fragments() { return fragments(); }, get moveTarget() { return moveTarget; }, WALL, get climbDone() { return climbDone; }, get puzzle() { return puzzle; }, puzzleTap, quitPuzzle, PM, get W() { return W; }, get H() { return H; }, buildPdf, diploma, godMode, bikeSpot, otSpot, BIGCAT_SPOTS, blocked, showCard, win: () => win(), advance,

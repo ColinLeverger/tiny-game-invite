@@ -138,7 +138,7 @@ async function play(browser, tag, opts, mode) {
   check(await ev(() => __invite.puzzle.phase) === 'caught', `${tag}: the strike did not catch anything`);
   await p.keyboard.press('Escape');
   check(await ev(() => __invite.state === 'play' && Object.values(__invite.stats.fish || {}).reduce((a, b) => a + b, 0) === 1), `${tag}: catch not counted`);
-  check(!(await ev(() => __invite.stats.puzzles.some((q) => q.label === 'Pêche'))), `${tag}: fishing scored as a puzzle`);
+  check(!(await ev(() => __invite.stats.puzzles.some((q) => q.label === 'Repêchage'))), `${tag}: fishing scored as a puzzle`);
   await place(() => { __invite.player.y -= 40; });
 
   // Rapporteur: tap the anomalous trajectory; in extreme mode quit at question 2, come back, finish the exam.
