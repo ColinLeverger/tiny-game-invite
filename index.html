@@ -56,8 +56,30 @@
   #objBox li { margin: 3px 0; line-height: 1.35; }
   #objBox li.done { color: #2c6a42; }
   #objBox p { font-size: 13px; line-height: 1.4; }
-  #cBadgeBox { display: flex; gap: 12px; align-items: center; }
-  #cBadgeImg { width: 96px; height: 96px; image-rendering: pixelated; flex: none; }
+  /* The badge: a medal pinned to the card's top-right corner; hover or tap it for the score details. */
+  #card .box { position: relative; }
+  #card h1, #card #cBig { padding-right: 76px; }
+  #cBadgeBtn { position: absolute; top: -26px; right: -22px; width: 96px; height: 96px; padding: 0; border: 0; background: none;
+               cursor: help; transform: rotate(8deg); filter: drop-shadow(3px 4px 0 rgba(0,0,0,.45)); animation: wiggle 2.8s ease-in-out infinite; }
+  #cBadgeBtn:hover, #cBadgeBtn:focus-visible { animation: none; transform: rotate(0) scale(1.08); }
+  #cBadgeImg { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+  @keyframes wiggle { 0%, 88%, 100% { transform: rotate(8deg); } 92% { transform: rotate(-6deg); } 96% { transform: rotate(14deg); } }
+  #cBadgeTip { display: none; position: absolute; z-index: 3; top: 76px; right: 8px; width: min(340px, calc(100vw - 48px));
+               background: #2b2340; color: #fdf6e3; border: 3px solid var(--gold); box-shadow: 4px 4px 0 #000; padding: 10px 12px; font-size: 13px; }
+  #cBadgeBtn:hover + #cBadgeTip, #cBadgeBtn:focus-visible + #cBadgeTip, #cBadgeTip.open { display: block; }
+  #cBadgeTip h3 { margin: 0 0 6px; color: var(--gold); font-size: 14px; }
+  #cBadgeTip .small { margin: 6px 0; font-size: 12px; line-height: 1.35; }
+  #cBadgeTip table { width: 100%; border-collapse: collapse; }
+  #cBadgeTip td { padding: 2px 0; border-bottom: 1px dotted rgba(253,246,227,.25); }
+  #cBadgeTip td:last-child { text-align: right; white-space: nowrap; padding-left: 8px; }
+  #cBadgeTip tr.total td { font-weight: bold; color: var(--gold); border-bottom: 0; padding-top: 4px; }
+  @media (max-width: 759px) { /* phones: the overlay's padding is smaller, keep the medal inside it */
+    #cBadgeBtn { top: -12px; right: -10px; width: 76px; height: 76px; }
+    #card h1, #card #cBig { padding-right: 58px; }
+    #cBadgeTip { top: 62px; right: -6px; }
+  }
+  #cBadge { margin: 8px 0; padding-left: 26px; }
+  #cBadge li { margin: 3px 0; line-height: 1.4; }
   .overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 16px;
              background: rgba(16, 12, 26, .82); overflow-y: auto; }
   .hidden { display: none !important; }
@@ -143,6 +165,8 @@
 
 <div id="card" class="overlay hidden">
   <div class="box">
+    <button id="cBadgeBtn" class="hidden" type="button" aria-label="Ton badge : le détail de ton score" aria-describedby="cBadgeTip"><img id="cBadgeImg" alt="Ton badge"></button>
+    <div id="cBadgeTip" role="tooltip"></div>
     <h1 id="cTitle"></h1>
     <p class="big" id="cBig">Ketsia est docteure (on espère) ! On fête ça.</p>
     <div class="cols"><div class="col">
@@ -156,9 +180,8 @@
     <p class="hidden" id="cMsg"></p>
     <p class="sig hidden" id="cFrom"></p>
     </div><div class="col">
-    <p class="row hidden" id="cBadge"></p>
+    <ul class="row hidden" id="cBadge"></ul>
     <p class="row hidden" id="cScore"></p>
-    <div class="row hidden" id="cBadgeBox"><img id="cBadgeImg" alt="Ton badge"><p id="cBadgeTxt"></p></div>
     </div></div>
     <div class="btns">
       <a class="btn hidden" id="cMap" target="_blank" rel="noopener">Voir sur la carte</a>

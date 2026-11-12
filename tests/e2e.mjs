@@ -167,6 +167,10 @@ async function play(browser, tag, opts, mode) {
   check(new Set(labels).size === labels.length, `${tag}: a puzzle was recorded twice: ${labels.join(', ')}`);
   await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 }); // after the bar scene
   check((await p.textContent('#cBar')).includes('Bar Test'), `${tag}: bar missing from the card`);
+  // The badge medal opens the score details.
+  await p.click('#cBadgeBtn');
+  check((await p.textContent('#cBadgeTip')).includes('Total'), `${tag}: badge details missing`);
+  await p.click('#cTitle');
   // Back to the party, then a tap on the scene brings the card back.
   await p.click('#cParty');
   check(await p.locator('#card.hidden').count() === 1, `${tag}: "Revoir la fête" did not hide the card`);

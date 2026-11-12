@@ -2183,7 +2183,7 @@
     cardShown = true;
     $('cBig').textContent = hope('Ketsia est docteure ! On fête ça.');
     $('nameBox').classList.add('hidden');
-    $('cTitle').textContent = `${playerName === 'toi' ? 'Tu es' : playerName + ', tu es'} invité·e !`;
+    $('cTitle').textContent = `${playerName === 'toi' ? 'Tu es' : playerName + ', tu es'} invité·e\u00a0!`; // no-break space: the "!" never wraps alone
     $('cWhen').textContent = `Mardi 1er décembre 2026, à partir de ${INV.h || '19h'}.`;
     const where = [INV.b, INV.a].filter(Boolean).join(' · ');
     if (where) {
@@ -2212,7 +2212,11 @@
     if (otDone) badges.push('Badge Monge-Kantorovich : tu as rééquilibré les vélos de Rennes au moindre coût.');
     if (extreme && fragments() === 2) badges.push('Survivant·e du mode EXTRÊME DE LA MORT QUI TUE. Respect éternel.');
     else if (hard && solvedCount === 2) badges.push('Mode difficile terminé : {c2} t\'a fait confiance. C\'est rare.');
-    if (badges.length) { $('cBadge').textContent = N(badges.join(' ')); $('cBadge').classList.remove('hidden'); }
+    if (badges.length) {
+      const ul = $('cBadge'); ul.textContent = '';
+      badges.forEach((b) => { const li = document.createElement('li'); li.textContent = N(b); ul.appendChild(li); });
+      ul.classList.remove('hidden');
+    }
     // Nothing to show in the "your run" column (skipped the game): one narrow column instead of two.
     const one = !stats.played && !badges.length;
     document.querySelector('#card .cols').classList.toggle('one', one);
@@ -2225,13 +2229,37 @@
       $('cScore').classList.remove('hidden');
       const bi = badgeInfo(dip);
       $('cBadgeImg').src = badgeCanvas(dip).toDataURL('image/png');
-      $('cBadgeTxt').textContent = `Ton badge : ${bi.order}, niveau ${bi.rankName}. Sa forme dépend du mode de jeu, sa couleur de ton score, ses pierres des encadrant·es croisé·es. Au bar, cherche celles et ceux qui ont le même !`;
-      $('cBadgeBox').classList.remove('hidden');
+      $('cBadgeBtn').classList.remove('hidden');
+      fillBadgeTip(dip, bi);
     }
     if (INV.m) { $('cMsg').textContent = INV.m; $('cMsg').classList.remove('hidden'); }
     if (INV.f) { $('cFrom').textContent = `— ${INV.f}`; $('cFrom').classList.remove('hidden'); }
     $('card').classList.remove('hidden');
   }
+  // The badge sits in the card's top-right corner; hovering it (or a tap on a phone) shows how the score was made.
+  function fillBadgeTip(d, bi) {
+    const tip = $('cBadgeTip'); tip.textContent = '';
+    const el = (tag, text, cls) => { const e = document.createElement(tag); if (text) e.textContent = N(text); if (cls) e.className = cls; tip.appendChild(e); return e; };
+    el('h3', `${bi.order} · niveau ${bi.rankName}`);
+    el('p', 'Forme : ton mode de jeu. Couleur : ton score. Pierres : les encadrant·es croisé·es. Points du bas : vélo, escalade, pigeon, métro. Au bar, cherche qui a le même !', 'small');
+    const t = el('table');
+    const row = (label, value, cls) => { const tr = document.createElement('tr'); if (cls) tr.className = cls; [label, value].forEach((v) => { const td = document.createElement('td'); td.textContent = N(v); tr.appendChild(td); }); t.appendChild(tr); };
+    d.puzzles.forEach((p) => row(p.label, `${p.score}`));
+    const pts = d.parts || {};
+    if (pts.sups) row(`Encadrant·es (${d.sups}/3)`, `+${pts.sups}`);
+    if (pts.colin) row('Colin, en haut de la tour', `+${pts.colin}`);
+    if (pts.fish) row('Pêche dans la Vilaine', `+${pts.fish}`);
+    if (pts.poulpy) row('Poulpy !', `+${pts.poulpy}`);
+    if (pts.tapas) row('Tapas sauvées du pigeon', `+${pts.tapas}`);
+    if (d.petBonus) row('Caresses aux chats', `+${d.petBonus}`);
+    if (d.penalty) row('Accidents et fuites', `−${d.penalty}`);
+    if (d.mult && d.mult !== 1) row('Multiplicateur de difficulté', `×${String(d.mult).replace('.', ',')}`);
+    row('Total', `${d.score} points`, 'total');
+    el('p', `Mention ${d.mention}. Score de référence : ${d.par || '?'} points (puzzles principaux parfaits et les trois encadrant·es).`, 'small');
+  }
+  $('cBadgeBtn').addEventListener('click', (e) => { e.stopPropagation(); $('cBadgeTip').classList.toggle('open'); });
+  document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('#cBadgeTip')) $('cBadgeTip').classList.remove('open'); });
+
   // Souvenir photo: everyone met tonight, in front of the bar.
   function photo() {
     const c = document.createElement('canvas'); c.width = 480; c.height = 300;
@@ -2286,7 +2314,8 @@
     const petBonus = Math.min(100, 5 * stats.pets);
     const sups = supsFound(), tapas = stats.tapas || 0;
     const fish = { ...(stats.fish || {}) }, fishN = Object.values(fish).reduce((a, b) => a + b, 0);
-    const extraBonus = 150 * sups + Math.min(100, 20 * tapas) + Math.min(60, 10 * fishN) + (fish.poulpy ? 50 : 0) + (climbDone ? 50 : 0);
+    const parts = { sups: 150 * sups, tapas: Math.min(100, 20 * tapas), fish: Math.min(60, 10 * fishN), poulpy: fish.poulpy ? 50 : 0, colin: climbDone ? 50 : 0 };
+    const extraBonus = Object.values(parts).reduce((a, b) => a + b, 0);
     const raw = Math.max(0, puzzles.reduce((s, p) => s + p.score, 0) + petBonus + extraBonus - penalty);
     const mult = extreme ? 2.5 : hard ? 1.5 : 1;
     const score = Math.round(raw * mult);
@@ -2298,7 +2327,7 @@
     const d = {
       rank, supsWho: SUPS.map((p) => p.found), climb: climbDone, colin: climbDone, fish, stories: Math.min(storyNext, STORIES.length),
       name: playerName, hard, extreme, pets: stats.pets, petBonus, metro: stats.metro, sups, tapas, ghost: stats.ghost || 0, met: [...stats.met], god: !!stats.god, seconds: Math.round((stats.end - stats.start) / 1000), meters: Math.round(stats.dist / T * 10),
-      hits: stats.hits, flees, bike: hasBike, bonus: otDone, puzzles, penalty, score, mention,
+      hits: stats.hits, flees, bike: hasBike, bonus: otDone, puzzles, penalty, score, mention, parts, mult, par: Math.round(par),
       date: new Date(stats.end).toISOString(),
     };
     let h = 2166136261; // FNV-1a, a light anti-retouch stamp
