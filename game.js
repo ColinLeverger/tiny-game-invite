@@ -1612,7 +1612,17 @@
     ctx.fillStyle = '#f4f4f4'; ctx.fillRect(tx, ty + 24, 130, 4);
     for (let i = 0; i < 5; i++) { ctx.fillStyle = '#bfe3f2'; ctx.fillRect(tx + 8 + i * 24, ty + 6, 16, 12); }
     ctx.drawImage(KS.r[0], Math.round(tx + 58), ty + 4);
-    centered(metro.dur > 2 ? 'Service minimum… patience.' : 'Ding-dong !', W / 2, 26, '#f2c14b', 9);
+    // Whoever follows Ketsia rides along, one per window: the cats, then Colin.
+    const riders = [...following().map((c) => (c.key === 'cat1' ? NOBLECAT[0] : BIGCAT[0])), ...(climbDone ? [COLIN_DIR.r] : [])];
+    riders.forEach((img, k) => {
+      const wx = Math.round(tx + 8 + [3, 1, 4, 0][k] * 24), wy = ty + 6;
+      ctx.save(); ctx.beginPath(); ctx.rect(wx, wy, 16, 12); ctx.clip();
+      const bounce = Math.floor(time * 6 + k) % 2; // the train rattles
+      ctx.drawImage(img, wx + Math.round((16 - img.width) / 2), wy + 12 - Math.min(img.height, 11) - bounce + (img === COLIN_DIR.r ? 3 : 0));
+      ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(wx + 1, wy + 1, 6, 1); // a glint on the glass
+      ctx.restore();
+    });
+    centered(extreme ? 'Service minimum… patience.' : 'Ding-dong !', W / 2, 26, '#f2c14b', 9);
     centered('Métro · prochain arrêt :', W / 2, H - 40, '#f4ead5', 8);
     centered(STATIONS[metro.to].name, W / 2, H - 26, '#f2c14b', 10);
   }
