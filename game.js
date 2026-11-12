@@ -1218,7 +1218,7 @@
       colin.x = player.x; colin.y = player.y;
       say([
         ['Ketsia', 'Au sommet ! D\'ici, on voit tout le graphe de Rennes. Même {c2}, tout petit.'],
-        ['Colin', 'Ketsia ?! Je suis monté voir le coucher de soleil sur Rennes. Tu as l\'air bien pressée…'],
+        ['Colin', 'Ketsia ?! Je suis monté jouer de la guitare face au coucher de soleil sur Rennes. Tu as l\'air bien pressée…'],
         ['Ketsia', 'Colin ! Viens avec nous, on descend : direction le bar !'],
         ['', 'Easter egg trouvé : Colin te suit jusqu\'au bar. Et badge secret « Grimpeur·se de la tour des maths ».'],
       ]);
@@ -1546,7 +1546,7 @@
     if (climbDone) {
       const c = colinPos();
       ents.push({ y: c.y, draw: () => {
-        const sx = Math.round(c.x - 8 - cx), sy = Math.round(c.y - 16 - cy - (c.moving ? Math.floor(time * 8) % 2 : 0));
+        const sx = Math.round(c.x - COLIN.width / 2 - cx), sy = Math.round(c.y - COLIN.height - cy - (c.moving ? Math.floor(time * 8) % 2 : 0));
         ctx.drawImage(COLIN, sx, sy);
         textShadow('♥', c.x - cx, sy - 2 + Math.sin(time * 3) * 1.2, '#ff6b9a', 8);
       } });
@@ -1779,8 +1779,14 @@
     '...SSSSnnSSSS...', '....SSSmmSSS....', '.....SSSSSS.....', '...TTTTTTTTTT...', '..TTTTTTTTTTTT..',
     '..TTTTTTTTTTTT..', '..STTTTTTTTTTS..', '...TTTTTTTTTT...', '...PPPP..PPPP...', '...PPPP..PPPP...', '...KKKK..KKKK...'],
   { k: '#1e1a22', h: '#2b2340', S: '#e8b896', B: '#2e86c1', n: '#d9a083', m: '#a8605a', T: '#1abc9c', P: '#2c3a5e', K: '#1e1a22' });
-  // Colin: same build as the guests (short brown hair, blue hoodie).
-  const COLIN = makeSprite(GUEST_ROWS, { h: '#5a3a22', S: '#f0c3a5', e: '#2b2340', n: '#d9a083', m: '#a8605a', T: '#2e86c1', P: '#3a3f4a', K: '#1e1a22' });
+  // Colin: tall, hair down to the shoulders, bright blue glasses, mutton chops, colourful clothes,
+  // and a guitar (no case) slung across his back: the neck over his shoulder, the body at his hip.
+  const COLIN = makeSprite(['.wd...............', '.dd..hhhhhhhh.....', '..d.hhhhhhhhhh....', '..d.hhSSSSSShhh...', '...dhBBBSSBBBhh...',
+    '...dhBeBBBBeBhh...', '...dhcSSSnSSchh...', '...dhcccccccchh...', '...dhhcSmmSchhh...', '...dhh.SSSS.hhh...',
+    '...hTTRRUUOOTTh...', '...hRUUOOTTRRUh.gg', '...TUUOOTTRRUUTggg', '..SUOOTTRRUUOOTSgg', '...OTTRRUUOOTTRgdg',
+    '....PPPPPPPPPP.gg.', '....PPPP..PPPP....', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'],
+  { h: '#5a3a22', c: '#3e2616', S: '#f0c3a5', n: '#d9a083', m: '#a8605a', B: '#2e6fd8', e: '#1e1a22',
+    T: '#f2c14b', R: '#e2505e', U: '#2fa39a', O: '#9b59b6', P: '#2c3a5e', K: '#1e1a22', g: '#c8873a', d: '#6b3e1e', w: '#e8e2c0' });
   // Cabbage heads ("têtes de chou"), partying at the bar.
   const CHOU_ROWS = ['.....lLLLLl.....', '...lLLlLLlLLl...', '..lLlLLLLLLlLl..', '..LLLeLLLLeLLL..', '..lLLLLLLLLLLl..',
     '..LlLLLmmLLLlL..', '...lLLLLLLLLl...', '.....lLLLLl.....', ...GUEST_ROWS.slice(8)];
@@ -1833,7 +1839,7 @@
           ctx.beginPath(); ctx.moveTo(hx - 3, top + 1); ctx.lineTo(hx + 3, top + 1); ctx.lineTo(hx, top - 6); ctx.fill();
           ctx.fillStyle = '#ffffff'; ctx.fillRect(hx - 0.5, top - 7, 1.5, 1.5);
         }
-        if (img === COLIN) textShadow('♥', x + 8, top - 2 + Math.sin(t * 3) * 1.2, '#ff6b9a', 8);
+        if (img === COLIN) textShadow('♥', x + 9, top - 2 + Math.sin(t * 3) * 1.2, '#ff6b9a', 8);
       });
     });
     for (let k = 0; k < 28; k++) { // confetti
