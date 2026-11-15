@@ -848,7 +848,7 @@
     loic: [
       ['Loïc', 'Oh, Ketsia ! Je viens de faire une pause clope, j\'y retourne : je prépare mon cours de mécanique de demain.'],
       ['Loïc', 'Demain, je fais vibrer une poutre de Timoshenko devant les L3. Avec une guitare.'],
-      ['Loïc', 'Pourquoi ? Car une corde de guitare, c\'est une équation des ondes, mais avec du groove. D\'ailleurs, sur FIP, ils viennent d\'enchaîner Batoul et une cumbia péruvienne. Sans transition. Du génie.'],
+      ['Loïc', 'Pourquoi ? Car une corde de guitare, c\'est une équation des ondes, mais avec du groove. D\'ailleurs, sur FIP, ils viennent d\'enchaîner Batlik et une cumbia péruvienne. Sans transition. Du génie.'],
       ['Ketsia', 'Tu viens au bar ce soir ?'],
       ['Loïc', 'J\'arrive dès que ce morceau se termine. C\'est rapide, il dure trente-six minutes.'],
     ],
