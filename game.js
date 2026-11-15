@@ -219,13 +219,12 @@
     { key: 'these', a: 'le chapitre 3 de la thèse (v1)', img: THESE, p: 0.15, one: 'chapitre 3', many: 'chapitres 3', name: 'Le chapitre 3 de la thèse, version 1',
       sub: 'Celui que Ketsia croyait avoir supprimé. Elle le rejette à l\'eau, très vite.' },
     { key: 'triathlete', a: 'un triathlète', img: TRIATHLETE, p: 0.08, one: 'triathlète', many: 'triathlètes', name: 'Un triathlète !',
-      sub: 'Trente-quatre ans, bonnet de bain, furieux : « Mon record ! » Il repart en crawl vers le Thabor.' },
+      sub: 'Trente-quatre ans, bonnet de bain, furieux : « Mon record ! » Il repart vers le Thabor, son vélo sous le bras.' },
   ];
   const POULPY_JOKES = [
     'Un poulpe entre dans un bar et commande huit cidres. « C\'est pour qui ? » « Pour mes bras. »',
-    'Mon chiffre préféré ? Le huit. Couché, c\'est l\'infini : j\'ai toujours un bras d\'avance.',
-    'J\'ai tenté le transport optimal : huit bras, un seul vélo. Le problème était mal posé.',
-    'Pourquoi je ne fais pas de thèse ? Avec huit bras, j\'aurais huit directeurs de thèse.',
+    'Quel est le pire pour une pieuvre ? Avoir la chair de poulpe.',
+    'Que dit un poulpe effrayé ? Je me suis fait un sang d\'encre !',
   ];
 
   // Vehicles (drawn facing right, rotated/flipped per lane).
@@ -838,11 +837,11 @@
   /* ----- side quest: the three supervisors ----- */
   const SUP_TALK = {
     loic: [
-      ['Loïc', 'Oh, Ketsia ! Je viens de fumer une clope, j\'y retourne : je prépare mon cours de mécanique de demain.'],
-      ['Loïc', 'Demain, je fais vibrer une poutre de Timoshenko devant les L3. Avec une guitare. Ils comprennent les modes propres. La guitare, moins.'],
-      ['Loïc', 'Une corde de guitare, c\'est une équation des ondes avec du groove. D\'ailleurs, sur FIP, ils viennent d\'enchaîner Coltrane et une cumbia péruvienne. Sans transition. Du génie.'],
+      ['Loïc', 'Oh, Ketsia ! Je viens de faire une pause clope, j\'y retourne : je prépare mon cours de mécanique de demain.'],
+      ['Loïc', 'Demain, je fais vibrer une poutre de Timoshenko devant les L3. Avec une guitare.'],
+      ['Loïc', 'Pourquoi ? Car une corde de guitare, c\'est une équation des ondes, mais avec du groove. D\'ailleurs, sur FIP, ils viennent d\'enchaîner Batoul et une cumbia péruvienne. Sans transition. Du génie.'],
       ['Ketsia', 'Tu viens au bar ce soir ?'],
-      ['Loïc', 'J\'arrive dès que ce morceau se termine. Il dure trente-six minutes.'],
+      ['Loïc', 'J\'arrive dès que ce morceau se termine. C\'est rapide, il dure trente-six minutes.'],
     ],
     vero: [
       ['Véronique', 'Ketsia ! Tu tombes bien : tu sais si on a droit à deux valises en soute pour le Canada ?'],
@@ -853,7 +852,7 @@
     ioana: [
       ['Ioana', 'Oups ! Pardon, je ne t\'avais pas vu·e ! On fait le tour du quartier, la petite adore le vent dans le casque.'],
       ['La petite', 'Ba-ba ! Vélooo !'],
-      ['Ioana', 'Rennes 2 est encore en grève, le campus est bloqué. J\'ai déplacé mon cours trois fois cette semaine…'],
+      ['Ioana', 'Rennes 2 est bloqué, dont la crèche, que la petite bloque avec une montagne de doudous ! En faisant du vélo, au moins elle voit des bases de transport optimal !'],
       ['Ioana', 'Bref ! Ce soir, si la petite s\'endort à l\'heure, je passe au bar.'],
     ],
   };
@@ -1407,9 +1406,9 @@
       climbDone = true; meet('climb'); meet('colin');
       colin.x = player.x; colin.y = player.y;
       say([
-        ['Ketsia', 'Au sommet ! D\'ici, on voit tout le graphe de Rennes. Même {c2}, tout petit.'],
-        ['Colin', 'Ketsia ?! Je suis monté jouer de la guitare face au coucher de soleil sur Rennes. Tu as l\'air bien pressée…'],
-        ['Ketsia', 'Colin ! Viens avec nous, on descend : direction le bar !'],
+        ['Ketsia', 'Au sommet ! D\'ici, on voit tout le réseau routier de Rennes. Et même {c2}, tout petit.'],
+        ['Colin', 'Ketsia ?! Je suis monté jouer de la guitare, ça m\'a fait un bien fou, j\'étais comme un poisson dans l\'eau ! Tu veux écouter ma compo ?'],
+        ['Ketsia', 'Colin ! Viens avec moi, on descend : direction le bar !'],
         ['', 'Easter egg trouvé : Colin te suit jusqu\'au bar. Et badge secret « Grimpeur·se de la tour des maths ».'],
       ]);
     }));
