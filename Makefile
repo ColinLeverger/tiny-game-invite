@@ -2,11 +2,11 @@
 PORT ?= 8000
 E2E_PORT ?= 8766
 
-.PHONY: help run smoke e2e check
+.PHONY: help run smoke e2e check bilan bilan-demo
 
 help:  ## List targets
 	@grep -E '^[a-z0-9_-]+:.*?## ' $(MAKEFILE_LIST) \
-	  | awk 'BEGIN{FS=":.*?## "}{printf "  %-8s %s\n",$$1,$$2}'
+	  | awk 'BEGIN{FS=":.*?## "}{printf "  %-11s %s\n",$$1,$$2}'
 
 run:  ## Serve the site on http://localhost:$(PORT) (link generator: /lien.html)
 	python3 -m http.server $(PORT)
@@ -22,3 +22,9 @@ e2e:  ## Play the whole game in a headless browser (needs Playwright)
 	BASE=http://localhost:$(E2E_PORT) node tests/e2e.mjs
 
 check: smoke e2e  ## Full gate: what CI runs
+
+bilan:  ## Fetch GoatCounter counts, write bilan.html (needs GOATCOUNTER_TOKEN)
+	python3 scripts/bilan.py
+
+bilan-demo:  ## Preview the recap page with made-up counts (bilan-demo.html)
+	python3 scripts/bilan.py --demo && echo "open http://localhost:$(PORT)/bilan-demo.html after make run"

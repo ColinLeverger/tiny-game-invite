@@ -1,2 +1,4 @@
 .tokensave/
 node_modules/
+.env
+bilan-demo.html
