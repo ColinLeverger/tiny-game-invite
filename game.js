@@ -861,7 +861,7 @@
     ioana: [
       ['Ioana', 'Oups ! Pardon, je ne t\'avais pas vu·e ! On fait le tour du quartier, la petite adore le vent dans le casque.'],
       ['La petite', 'Ba-ba ! Vélooo !'],
-      ['Ioana', 'Rennes 2 est bloqué, dont la crèche, que la petite bloque avec une montagne de doudous ! En faisant du vélo, au moins elle voit des bases de transport optimal !'],
+      ['Ioana', 'Rennes 2 est bloqué, et la crèche aussi : la petite a monté sa propre barricade de doudous ! Alors on fait du vélo : au moins, elle révise les bases du transport optimal.'],
       ['Ioana', 'Bref ! Ce soir, si la petite s\'endort à l\'heure, je passe au bar.'],
     ],
   };
