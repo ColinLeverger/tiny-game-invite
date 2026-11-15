@@ -62,8 +62,10 @@ a le lien peut en revanche les lire.
 
 ## Usage counts
 
-`index.html` loads GoatCounter (`ketsia-invite.goatcounter.com`) unless the browser sends
-Do Not Track or Global Privacy Control. No cookie, no name: only the page path (never the
+`index.html` loads GoatCounter (`ketsia-invite.goatcounter.com`) for every visitor, Do Not
+Track and Global Privacy Control included (decided 2026-11-15: nothing personal is sent, and
+GPC browsers such as Firefox with "do not sell or share" on were otherwise invisible). Ad
+blockers still stop it. No cookie, no name: only the page path (never the
 `#i=` invitation fragment) and coarse game events (`debut/<mode>`, `rencontre/<who>`,
 `peche/<find>`, `fin/<mode>/<medal>`, `duree/<mode>/<bucket>`, `encadrants/<mode>/<n>-sur-3`,
 `carte/<button>`, `infos-directes`). Nothing is sent with `?test` or in god mode.
