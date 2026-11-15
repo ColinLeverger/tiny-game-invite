@@ -44,11 +44,29 @@ MEETS = [
     ('fish', 'sont allé·es pêcher sur la Vilaine'),
     ('poulpy', 'ont remonté Poulpy le poulpe'),
     ('ghost', 'ont été rattrapé·es par le Reviewer 2'),
+    ('caresse', 'ont caressé un chat au moins une fois'),
+    ('pas-de-loup', 'ont marché à pas de loup'),
+    ('coucou-ioana', 'ont recroisé Ioana pour un « Coucou ! »'),
+    ('toutes-histoires', 'ont écouté toutes les histoires des bancs'),
+    ('menu', 'ont ouvert la liste des objectifs'),
 ]
+# detail/<what>/<bucket>, sent once per finished game: (what, title, unit, bucket order).
+DETAILS = [
+    ('caresses', 'Les caresses aux chats', 'caresses', ['0', '1-4', '5-19', '20-49', '50+']),
+    ('tapas', 'Les tapas sauvées du pigeon', 'fois', ['0', '1', '2-3', '4-7', '8+']),
+    ('metro', 'Les trajets en métro', 'trajets', ['0', '1', '2-4', '5-9', '10+']),
+    ('histoires', 'Les histoires des bancs', 'histoires', None),
+    ('trouvailles', 'Les trouvailles du repêchage', 'trouvailles', ['0', '1-2', '3-5', '6-11', '12+']),
+    ('accidents', 'Les accidents de la route', 'accidents', ['0', '1-2', '3-5', '6-9', '10+']),
+    ('distance', 'La distance parcourue', '', ['0-km', '1-km', '2-3-km', '4-7-km', '8+-km']),
+]
+FLAGS = [('sans-indice', 'ont tout résolu sans un seul indice'), ('sans-faute', 'ont tout résolu sans une erreur'),
+         ('puzzle-passe', 'ont passé au moins un puzzle')]
 CATCHES = [('galette', 'une galette-saucisse'), ('cidre', 'une bouteille de cidre'), ('velo', 'un vélo'),
            ('these', 'le chapitre 3 de la thèse (v1)'), ('triathlete', 'un triathlète'), ('poulpy', 'Poulpy')]
 CARD = [('agenda', 'ont ajouté la fête à leur agenda'), ('photo', 'ont pris la photo souvenir'),
-        ('rejouer', 'ont rejoué'), ('revoir-fete', 'sont retourné·es voir la fête')]
+        ('rejouer', 'ont rejoué'), ('revoir-fete', 'sont retourné·es voir la fête'),
+        ('diplome-pdf', 'ont téléchargé leur diplôme'), ('carte-du-bar', 'ont cherché le bar sur la carte')]
 
 
 def load_env(path='.env'):
@@ -99,9 +117,23 @@ def demo():
         c[f'rencontre/{k}'] = v
     for (k, _), v in zip(CATCHES, [24, 19, 17, 12, 7, 6]):
         c[f'peche/{k}'] = v
-    for (k, _), v in zip(CARD, [38, 15, 11, 9]):
+    for (k, _), v in zip(MEETS[16:], [44, 20, 15, 7, 26]):
+        c[f'rencontre/{k}'] = v
+    for k, _, _, order in DETAILS:
+        for b, v in zip(order or [f'{n}-sur-10' for n in range(11)], [3, 12, 14, 7, 3, 2, 1, 1, 2, 1, 4]):
+            c[f'detail/{k}/{b}'] = v
+    c.update({'detail/sans-indice/normal': 9, 'detail/sans-faute/normal': 4, 'detail/puzzle-passe/normal': 6})
+    for (k, _), v in zip(CARD, [38, 15, 11, 9, 27, 21]):
         c[f'carte/{k}'] = v
     return c
+
+
+def bucket_label(b, unit):
+    """'1-4' -> '1 à 4 caresses', '3-sur-10' -> '3 sur 10 histoires', '0-km' -> "moins d'1 km"."""
+    if b == '0-km':
+        return "moins d'1 km"
+    b = b.replace('-sur-', ' sur ').replace('-km', '')
+    return f"{b.replace('-', ' à ')} {unit or 'km'}"
 
 
 def pct(n, d):
@@ -150,6 +182,18 @@ def render(c, demo_mode):
     sup = [sum(g(f'encadrants/{m}/{n}-sur-3') for m, _ in MODES) for n in range(4)]
     s.append('<section><h2>Les trois encadrant·es</h2><p class="hint">Combien chacun·e en a invité, sur les parties terminées.</p>'
              + ''.join(bar(f'{n} sur 3', sup[n], sum(sup), 'var(--accent)') for n in range(4)) + '</section>')
+    det = ['<section><h2>Jusqu\'où vous êtes allé·es</h2><p class="hint">Sur les parties terminées. Tous ces petits détails étaient cachés.</p>']
+    det += [bar(txt, sum(g(f'detail/{k}/{m}') for m, _ in MODES), ends, 'var(--accent)') for k, txt in FLAGS]
+    det.append('</section>')
+    s.append(''.join(det))
+    for k, title, unit, order in DETAILS:
+        found = {p.split('/', 2)[2]: v for p, v in c.items() if p.startswith(f'detail/{k}/')}
+        if not found:
+            continue
+        keys = order or sorted(found, key=lambda b: int(b.split('-')[0].rstrip('+')))
+        tot = sum(found.values())
+        s.append(f'<section><h2>{title}</h2>' + ''.join(
+            bar(bucket_label(b, unit), found.get(b, 0), tot, '#7fb8d8') for b in keys) + '</section>')
     s.append('<section><h2>Et après la partie</h2>' + ''.join(bar(txt, g(f'carte/{k}'), ends) for k, txt in CARD) + '</section>')
     banner = '<div class="demo">Aperçu avec des chiffres inventés</div>' if demo_mode else ''
     today = dt.date.today().strftime('%d/%m/%Y')

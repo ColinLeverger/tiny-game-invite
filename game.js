@@ -1356,6 +1356,7 @@
     if (Math.abs(vx) === 1 && Math.abs(vy) === 1) { vx *= 0.7071; vy *= 0.7071; }
     player.dir = Math.abs(vx) > Math.abs(vy) ? (vx > 0 ? 'r' : 'l') : (vy > 0 ? 'd' : 'u');
     const speed = keys.sneak ? 30 : (hasBike ? 140 : 72);
+    if (keys.sneak && player.moving) meet('pas-de-loup');
     player.anim += dt * (keys.sneak ? 0.5 : 1);
     const sp = speed * dt, ox = player.x, oy = player.y;
     if (!blocked(player.x + vx * sp, player.y)) player.x += vx * sp;
@@ -1560,7 +1561,7 @@
       const story = STORIES[storyNext % STORIES.length];
       storyNext++;
       const lines = [['', storyNext === 1 ? 'Ketsia s\'assoit sur le banc. Une petite histoire des mathématiques, en passant ?' : 'Ketsia s\'assoit sur le banc. Encore une histoire ?'], ...story];
-      if (storyNext === STORIES.length) lines.push(['', 'Tu as entendu toutes les histoires des bancs. Auditeur·rice assidu·e !']);
+      if (storyNext === STORIES.length) { meet('toutes-histoires'); } if (storyNext === STORIES.length) lines.push(['', 'Tu as entendu toutes les histoires des bancs. Auditeur·rice assidu·e !']);
       say(lines);
       return true;
     }
@@ -1639,7 +1640,7 @@
     if (io.cool > 0) io.cool -= dt;
     if (Math.hypot(player.x - io.x, player.y - io.y) < 14) {
       if (!io.found) { meetSup(io); return true; }
-      if (io.cool <= 0) { io.cool = 4; SFX.bell(); showToast('Ioana : « Coucou ! » La petite : « Ba-ba ! »', 2); }
+      if (io.cool <= 0) { io.cool = 4; SFX.bell(); meet('coucou-ioana'); showToast('Ioana : « Coucou ! » La petite : « Ba-ba ! »', 2); }
     }
     for (const p of SUPS.slice(0, 2)) if (edge(p, 24, () => meetSup(p))) return true;
     return false;
@@ -1950,6 +1951,7 @@
   const menuHit = () => ({ x: W - 52, y: 0, w: 26, h: 18 });
   let paused = false;
   function openObjectives() {
+    meet('menu');
     paused = true; keys.up = keys.down = keys.left = keys.right = false; moveTarget = null;
     const ok = (b) => (b ? '✓' : '○');
     const hint = { loic: 'il aime la musique… cherche du côté d\'une salle de concert, au bord de la Vilaine', vero: 'elle prépare un voyage, sûrement à la fac de sciences éco', ioana: 'elle roule à vélo, loin, à Villejean (le métro y mène)' };
@@ -2247,6 +2249,20 @@
       track(`fin/${md}/${RANKS[finalDip.rank][0].toLowerCase()}`);
       track(`duree/${md}/${dur}-min`);
       track(`encadrants/${md}/${finalDip.sups}-sur-3`);
+      // How far guests went with the small hidden things, bucketed so nobody stands out.
+      const bk = (n, cuts) => { let lo = 0; for (const c of cuts) { if (n < c) return lo === c - 1 ? `${lo}` : `${lo}-${c - 1}`; lo = c; } return `${lo}+`; };
+      const fishN = Object.values(finalDip.fish).reduce((a, b) => a + b, 0);
+      const pz = finalDip.puzzles;
+      track(`detail/caresses/${bk(finalDip.pets, [1, 5, 20, 50])}`);
+      track(`detail/tapas/${bk(finalDip.tapas, [1, 2, 4, 8])}`);
+      track(`detail/metro/${bk(finalDip.metro, [1, 2, 5, 10])}`);
+      track(`detail/histoires/${finalDip.stories}-sur-${STORIES.length}`);
+      track(`detail/trouvailles/${bk(fishN, [1, 3, 6, 12])}`);
+      track(`detail/accidents/${bk(finalDip.hits, [1, 3, 6, 10])}`);
+      track(`detail/distance/${bk(Math.round(finalDip.meters / 1000), [1, 2, 4, 8])}-km`);
+      if (pz.length && pz.every((q) => !q.hints && !q.skipped)) track(`detail/sans-indice/${md}`);
+      if (pz.length && pz.every((q) => !q.wrong && !q.skipped)) track(`detail/sans-faute/${md}`);
+      if (finalDip.puzzles.some((q) => q.skipped)) track(`detail/puzzle-passe/${md}`);
     } else track('infos-directes');
     store.set(SAVE_KEY, ''); SFX.win();
     $('nameBox').classList.add('hidden');
@@ -2617,6 +2633,7 @@
     const mode = m ? m.value : 'normal';
     hard = mode !== 'normal'; extreme = mode === 'extreme';
     trafficMul = extreme ? 1.9 : hard ? 1.3 : 1;
+    if (soundOn) track('option/son');
   }
   $('nameForm').addEventListener('submit', (e) => {
     e.preventDefault(); takeName();
@@ -2643,7 +2660,7 @@
       if (auto) resume(sv);
     }
   }
-  [['cIcs', 'agenda'], ['cPhoto', 'photo'], ['cParty', 'revoir-fete'], ['cReplay', 'rejouer']]
+  [['cIcs', 'agenda'], ['cPhoto', 'photo'], ['cParty', 'revoir-fete'], ['cReplay', 'rejouer'], ['cPdf', 'diplome-pdf'], ['cMap', 'carte-du-bar'], ['lastPdf', 'ancien-diplome']]
     .forEach(([id, ev]) => { const b = $(id); if (b) b.addEventListener('click', () => track(`carte/${ev}`)); });
   $('skipLink').addEventListener('click', (e) => { e.preventDefault(); takeName(); showCard(); });
   $('pitchCats').textContent = `${CAT1} et ${CAT2}`;
@@ -2671,7 +2688,7 @@
   }
   const hearts = [];
   function pet(c) {
-    stats.pets++;
+    stats.pets++; if (stats.pets === 1) meet('caresse');
     hearts.push({ x: c.x, y: c.y - 14, t: 0, txt: c.key === 'cat1' ? 'prrr ♥' : 'MRRRR ♥' });
     SFX.purr();
   }

@@ -68,4 +68,6 @@ GPC browsers such as Firefox with "do not sell or share" on were otherwise invis
 blockers still stop it. No cookie, no name: only the page path (never the
 `#i=` invitation fragment) and coarse game events (`debut/<mode>`, `rencontre/<who>`,
 `peche/<find>`, `fin/<mode>/<medal>`, `duree/<mode>/<bucket>`, `encadrants/<mode>/<n>-sur-3`,
-`carte/<button>`, `infos-directes`). Nothing is sent with `?test` or in god mode.
+`carte/<button>`, `infos-directes`, `option/son`, and at the end of a game
+`detail/<thing>/<bucket>` for the hidden extras: caresses, tapas, metro, bench stories, finds,
+accidents, distance, no-hint / no-mistake runs). `make bilan` turns them into `bilan.html`. Nothing is sent with `?test` or in god mode.
