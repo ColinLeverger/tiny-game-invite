@@ -196,5 +196,17 @@
 </div>
 
 <script src="game.js"></script>
+<script>
+  // Anonymous visit counts (GoatCounter: no cookie, no personal data). Skipped when the
+  // browser asks not to be tracked. The #i=... invitation fragment is never sent.
+  (function () {
+    var nav = navigator;
+    if (nav.doNotTrack === '1' || window.doNotTrack === '1' || nav.globalPrivacyControl) return;
+    var s = document.createElement('script');
+    s.async = true; s.src = 'https://gc.zgo.at/count.js';
+    s.setAttribute('data-goatcounter', 'https://ketsia-invite.goatcounter.com/count');
+    document.body.appendChild(s);
+  })();
+</script>
 </body>
 </html>

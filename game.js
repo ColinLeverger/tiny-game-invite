@@ -694,7 +694,16 @@
   let toast = '', toastT = 0, invul = 0, time = 0;
   const keys = { up: false, down: false, left: false, right: false, sneak: false };
   const stats = { played: false, start: 0, end: 0, hits: 0, dist: 0, pets: 0, metro: 0, puzzles: [], met: [] };
-  const meet = (k) => { if (!stats.met.includes(k)) stats.met.push(k); }; // what this guest ran into, in order
+  const meet = (k) => { if (!stats.met.includes(k)) { stats.met.push(k); track(`rencontre/${k}`); } }; // what this guest ran into, in order
+  // Anonymous usage counts (GoatCounter, loaded by index.html unless Do Not Track / GPC is on).
+  // Only coarse game events go out: never the player's name, never the invitation fragment.
+  function track(path) {
+    try {
+      if (stats.god || /[?&]test\b/.test(location.search) || !window.goatcounter || !window.goatcounter.count) return;
+      window.goatcounter.count({ path, title: path, event: true });
+    } catch (e) { /* counting must never break the game */ }
+  }
+  const modeName = () => (extreme ? 'extreme' : hard ? 'difficile' : 'normal');
 
   const WHO = {
     '': '#f2c14b', Ketsia: '#e9a3a6', '{c1}': '#c8ccd4', '{c2}': '#aab0b8', Rapporteur: '#e06060', 'Le jury': '#9cc0e6', Colin: '#7fb3e0',
@@ -737,7 +746,7 @@
       ['', 'Astuce : une station de vélos se cache quelque part sur le campus. Et le métro mène loin.'],
     ];
     if (!seen) lines.push(['Ketsia', 'Ah, et si tu croises mes trois encadrant·es quelque part dans Rennes (Loïc, Ioana et Véronique), invite-les aussi !']);
-    stats.played = true; stats.start = Date.now();
+    stats.played = true; stats.start = Date.now(); track(`debut/${modeName()}`);
     if (extreme) { ghost.on = true; ghostHome(); }
     if (extreme) lines.push(['', 'Mode EXTRÊME DE LA MORT QUI TUE : nuit noire, circulation folle, chaque accident te renvoie au campus, pas d\'aide, et le jury chronomètre les puzzles. Le métro roule en service minimum. {c2} est terrorisé (pas de loup obligatoire : Maj ou bouton B).']);
     if (extreme) lines.push(['', 'Et le Reviewer 2 somnole quelque part, à un passage stratégique. S\'il te repère, il te suit : file avant qu\'il ne te touche. S\'il t\'attrape, ou si une voiture te percute, les chats s\'enfuient.']);
@@ -1472,6 +1481,7 @@
         if (phase === 'bite') {
           catchFish = pick();
           stats.fish = stats.fish || {}; stats.fish[catchFish.key] = (stats.fish[catchFish.key] || 0) + 1;
+          if (stats.fish[catchFish.key] === 1) track(`peche/${catchFish.key}`);
           if (catchFish.key === 'poulpy') meet('poulpy');
           phase = 'caught'; t = 0; this.msg = ''; SFX.win(); return;
         }
@@ -2220,7 +2230,7 @@
     if (extreme) { ghost.on = true; ghostHome(); }
     trail = []; state = 'play';
     $('nameBox').classList.add('hidden'); setTimeout(layout, 50);
-    showToast(`Partie reprise, ${playerName} !`, 2.2);
+    showToast(`Partie reprise, ${playerName} !`, 2.2); track(`reprise/${modeName()}`);
   }
   window.addEventListener('pagehide', snapshot);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') snapshot(); });
@@ -2232,7 +2242,12 @@
     if (stats.played) { // store the diploma first: closing during the bar scene must not lose the run
       stats.end = endAt; finalDip = diploma();
       store.set('invite-diploma', JSON.stringify(finalDip));
-    }
+      const min = finalDip.seconds / 60, md = modeName();
+      const dur = min < 10 ? '0-10' : min < 20 ? '10-20' : min < 30 ? '20-30' : min < 45 ? '30-45' : min < 60 ? '45-60' : '60+';
+      track(`fin/${md}/${RANKS[finalDip.rank][0].toLowerCase()}`);
+      track(`duree/${md}/${dur}-min`);
+      track(`encadrants/${md}/${finalDip.sups}-sur-3`);
+    } else track('infos-directes');
     store.set(SAVE_KEY, ''); SFX.win();
     $('nameBox').classList.add('hidden');
   }
@@ -2628,6 +2643,8 @@
       if (auto) resume(sv);
     }
   }
+  [['cIcs', 'agenda'], ['cPhoto', 'photo'], ['cParty', 'revoir-fete'], ['cReplay', 'rejouer']]
+    .forEach(([id, ev]) => { const b = $(id); if (b) b.addEventListener('click', () => track(`carte/${ev}`)); });
   $('skipLink').addEventListener('click', (e) => { e.preventDefault(); takeName(); showCard(); });
   $('pitchCats').textContent = `${CAT1} et ${CAT2}`;
   $('menuBtn').addEventListener('click', () => { if (state === 'play' && !paused) openObjectives(); });

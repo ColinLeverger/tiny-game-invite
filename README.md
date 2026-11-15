@@ -59,3 +59,11 @@ lien par invité·e, avec le prénom déjà rempli.
 Les adresses voyagent dans le fragment du lien (`#i=…`). Le navigateur n'envoie jamais le
 fragment au serveur : les adresses ne sont ni dans le dépôt ni chez GitHub. Toute personne qui
 a le lien peut en revanche les lire.
+
+## Usage counts
+
+`index.html` loads GoatCounter (`ketsia-invite.goatcounter.com`) unless the browser sends
+Do Not Track or Global Privacy Control. No cookie, no name: only the page path (never the
+`#i=` invitation fragment) and coarse game events (`debut/<mode>`, `rencontre/<who>`,
+`peche/<find>`, `fin/<mode>/<medal>`, `duree/<mode>/<bucket>`, `encadrants/<mode>/<n>-sur-3`,
+`carte/<button>`, `infos-directes`). Nothing is sent with `?test` or in god mode.
