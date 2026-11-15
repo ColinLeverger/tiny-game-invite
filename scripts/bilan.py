@@ -76,13 +76,15 @@ def fetch(token, start):
             data = json.load(r)
         for h in data.get('hits', []):
             seen.append(h['path_id'])
-            counts[h['path'].lstrip('/')] = counts.get(h['path'].lstrip('/'), 0) + int(h.get('count', 0))
+            # Page views land under the site's own path (/tiny-game-invite/...): pool them as visits.
+            key = h['path'].lstrip('/') if h.get('event') else '_visits'
+            counts[key] = counts.get(key, 0) + int(h.get('count', 0))
         if not data.get('more'):
             return counts
 
 
 def demo():
-    c = {'index.html': 64, 'infos-directes': 9, 'reprise/normal': 6, 'reprise/difficile': 3}
+    c = {'_visits': 64, 'infos-directes': 9, 'reprise/normal': 6, 'reprise/difficile': 3}
     starts = {'normal': 31, 'difficile': 14, 'extreme': 5}
     ends = {'normal': [3, 8, 11, 4], 'difficile': [1, 3, 4, 2], 'extreme': [1, 1, 0, 1]}
     for m, n in starts.items():
@@ -117,7 +119,7 @@ def render(c, demo_mode):
     g = lambda k: c.get(k, 0)
     starts = sum(g(f'debut/{m}') for m, _ in MODES)
     ends = sum(g(f'fin/{m}/{k}') for m, _ in MODES for k, *_ in MEDALS)
-    visits = g('index.html') or g('') or max(starts, 1)
+    visits = g('_visits') or starts
     s = []
     s.append(f'''<section class="hero">
   <div class="big"><b>{visits}</b><span>invité·es ont ouvert le lien</span></div>
