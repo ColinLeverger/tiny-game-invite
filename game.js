@@ -1236,8 +1236,11 @@
   // Easter egg: climb the maths tower. Tap the side of the next hold; a wrong side slips you down.
   function makeClimb() {
     const N = 22;
-    const sides = Array.from({ length: N }, (_, i) => (i < 2 ? i % 2 : (rnd() < 0.5 ? 0 : 1)));
+    // A fresh route on every attempt: Math.random, not the seeded rnd() that lays out the map.
+    const sides = Array.from({ length: N }, () => (Math.random() < 0.5 ? 0 : 1));
     const HOLD = ['#e2505e', '#f2c14b', '#4fb3e0', '#6fd06f', '#c38fd6', '#ff8c42'];
+    const holds = sides.map(() => ({ dx: 13 + Math.floor(Math.random() * 12), dy: Math.floor(Math.random() * 5) - 2,
+      w: 6 + Math.floor(Math.random() * 4), c: HOLD[Math.floor(Math.random() * HOLD.length)] }));
     let prog = 0, shown = 0, shake = 0;
     return {
       title: 'Tour des maths · Escalade', label: 'Easter egg · escalade', noGuide: true,
@@ -1256,14 +1259,30 @@
         if (skyY > top) {
           ctx.fillStyle = '#9cc0e6'; ctx.fillRect(cx - 44, top, 88, Math.min(bottom, skyY) - top);
           ctx.fillStyle = '#7d828b'; ctx.fillRect(cx - 46, Math.min(bottom, skyY) - 3, 92, 3);
-          centered('Sommet !', cx, Math.max(top + 8, skyY - 12), '#2b2340', 8);
+          centered('Sommet !', cx, Math.max(top + 8, skyY - 34), '#2b2340', 8);
+          // Colin waits on the roof, playing guitar; he only shows up once the summit is in view.
+          const cy = Math.round(Math.min(bottom, skyY) - 3 - COLIN.height + Math.abs(Math.sin(time * 4)) * -1);
+          const gx = Math.round(cx + 10), strum = Math.floor(time * 6) % 2;
+          if (cy + COLIN.height > top) {
+            ctx.drawImage(COLIN, gx, cy);
+            ctx.fillStyle = '#e0943e'; ctx.fillRect(gx + 3, cy + 12, 7, 5); // guitar body, held in front
+            ctx.fillStyle = '#3a1e0a'; ctx.fillRect(gx + 6, cy + 13, 2, 2);
+            ctx.fillStyle = '#7a3f14'; ctx.fillRect(gx + 10, cy + 13, 7, 1); ctx.fillRect(gx + 17, cy + 12, 1, 3); // neck and head
+            ctx.fillStyle = '#f0c3a5'; ctx.fillRect(gx + 5 + strum, cy + 14 - strum, 2, 2); // strumming hand
+            for (let k = 0; k < 2; k++) {
+              const ph = (time * 0.8 + k * 0.5) % 1;
+              textShadow('♪', gx + 14 + k * 6 + Math.sin(time * 3 + k) * 2, cy - 2 - ph * 14, k ? '#e9a3a6' : '#f2c14b', 8);
+            }
+          }
+        } else if (Math.floor(time * 2) % 2) { // still far below: his guitar drifts down from up there
+          textShadow('♪', cx + 22 + Math.sin(time * 2) * 6, top + 10 + (time * 8 % 16), '#f2c14b', 8);
         }
         for (let i = Math.max(0, Math.floor(shown) - 3); i < Math.min(N, Math.floor(shown) + 8); i++) {
           const y = base - (i - shown) * sp;
           if (y < top + 4 || y > bottom - 4) continue;
-          const x = cx + (sides[i] ? 18 : -18);
-          ctx.fillStyle = HOLD[i % HOLD.length]; ctx.fillRect(x - 4, y - 3, 8, 6);
-          if (i === prog && Math.floor(time * 4) % 2) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.strokeRect(x - 7, y - 6, 14, 12); }
+          const h = holds[i], x = cx + (sides[i] ? h.dx : -h.dx), hy = y + h.dy;
+          ctx.fillStyle = h.c; ctx.fillRect(x - h.w / 2, hy - 3, h.w, 6);
+          if (i === prog && Math.floor(time * 4) % 2) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.strokeRect(x - h.w / 2 - 3, hy - 6, h.w + 6, 12); }
         }
         const lean = prog > 0 ? (sides[prog - 1] ? 6 : -6) : 0;
         const jitter = shake > 0 ? Math.sin(time * 80) * 2 : 0;
