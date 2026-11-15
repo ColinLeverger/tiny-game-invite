@@ -85,7 +85,7 @@ def fetch(token, start):
     counts, seen = {}, []
     end = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=1)).strftime('%Y-%m-%dT00:00:00Z')
     while True:
-        q = {'start': f'{start}T00:00:00Z', 'end': end, 'limit': '100'}
+        q = {'start': start if 'T' in start else f'{start}T00:00:00Z', 'end': end, 'limit': '100'}
         if seen:
             q['exclude_paths'] = ','.join(map(str, seen))
         req = urllib.request.Request(f'{SITE}/api/v0/stats/hits?{urllib.parse.urlencode(q)}',
@@ -261,7 +261,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('--demo', action='store_true', help='made-up counts, written to bilan-demo.html')
     ap.add_argument('--from', dest='src', help='rebuild from a saved counts JSON instead of the API')
-    ap.add_argument('--start', default='2026-11-01', help='first day counted (YYYY-MM-DD)')
+    ap.add_argument('--start', default=os.environ.get('BILAN_START', '2026-11-01'),
+                    help='first moment counted, UTC: YYYY-MM-DD or YYYY-MM-DDTHH:00:00Z (drops the test runs before it)')
     a = ap.parse_args()
     if a.demo:
         counts, out = demo(), 'bilan-demo.html'
@@ -274,6 +275,7 @@ def main():
             sys.exit('GOATCOUNTER_TOKEN missing: create an API key (Settings > API, "Read statistics") '
                      'on ketsia-invite.goatcounter.com and put GOATCOUNTER_TOKEN=... in .env')
         counts, out = fetch(token, a.start), 'bilan.html'
+        counts = {k: v for k, v in counts.items() if not k.startswith('test/')}
         with open('bilan-counts.json', 'w', encoding='utf-8') as f:
             json.dump(counts, f, ensure_ascii=False, indent=1, sort_keys=True)
         print('counts saved: bilan-counts.json')

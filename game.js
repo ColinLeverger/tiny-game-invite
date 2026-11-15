@@ -1264,11 +1264,18 @@
           const cy = Math.round(Math.min(bottom, skyY) - 3 - COLIN.height + Math.abs(Math.sin(time * 4)) * -1);
           const gx = Math.round(cx + 10), strum = Math.floor(time * 6) % 2;
           if (cy + COLIN.height > top) {
-            ctx.drawImage(COLIN, gx, cy);
-            ctx.fillStyle = '#e0943e'; ctx.fillRect(gx + 3, cy + 12, 7, 5); // guitar body, held in front
-            ctx.fillStyle = '#3a1e0a'; ctx.fillRect(gx + 6, cy + 13, 2, 2);
-            ctx.fillStyle = '#7a3f14'; ctx.fillRect(gx + 10, cy + 13, 7, 1); ctx.fillRect(gx + 17, cy + 12, 1, 3); // neck and head
-            ctx.fillStyle = '#f0c3a5'; ctx.fillRect(gx + 5 + strum, cy + 14 - strum, 2, 2); // strumming hand
+            ctx.drawImage(COLIN_PLAYING, gx, cy);
+            // The guitar, held across the body: a figure-eight body at the hip, the neck rising to his left hand.
+            const px = (c, x, y, w = 1, h = 1) => { ctx.fillStyle = c; ctx.fillRect(gx + x, cy + y, w, h); };
+            px('#7a3f14', 3, 11, 5, 1); px('#7a3f14', 2, 12, 7, 5); px('#7a3f14', 3, 17, 5, 1); // outline
+            px('#e0943e', 4, 12, 3, 1); px('#e0943e', 3, 13, 5, 4); px('#f0b060', 4, 13, 2, 1); // top, with a highlight
+            px('#3a1e0a', 5, 14, 2, 2); // sound hole
+            px('#f0c878', 8, 14, 4, 1); px('#f0c878', 12, 13, 4, 1); px('#f0c878', 16, 12, 3, 1); // neck, rising to his left
+            px('#7a3f14', 8, 15, 4, 1); px('#7a3f14', 12, 14, 4, 1); px('#7a3f14', 16, 13, 3, 1); // its shadow
+            px('#2b1a10', 19, 10, 2, 3); px('#ffffff', 19, 9, 1, 1); px('#ffffff', 21, 11, 1, 1); // head and pegs
+            px('#f0c3a5', 15, 12 + strum, 2, 2); // fretting hand
+            px('#f0c3a5', 4 + strum, 15 - strum, 2, 2); // strumming hand
+            if (strum) px('#ffffff', 3, 14, 1, 1); // a glint on the strings
             for (let k = 0; k < 2; k++) {
               const ph = (time * 0.8 + k * 0.5) % 1;
               textShadow('♪', gx + 14 + k * 6 + Math.sin(time * 3 + k) * 2, cy - 2 - ph * 14, k ? '#e9a3a6' : '#f2c14b', 8);
@@ -2127,11 +2134,15 @@
     T: '#f2c14b', R: '#e2505e', U: '#2fa39a', O: '#9b59b6', P: '#2c3a5e', K: '#1e1a22',
     g: '#e0943e', G: '#7a3f14', o: '#3a1e0a', k: '#f0c878', w: '#ffffff', z: '#2b1a10' };
   // Front, back and side views; the left view is the right one flipped. The back shows the whole guitar.
-  const COLIN_DIR = { d: makeSprite(['.ww...............', '.kk..hhhhhhhh.....', '..k.hhhhhhhhhh....', '..k.hhSSSSSShhh...', '...khBBBSSBBBhh...', '...khBeBBBBeBhh...', '...khcSSSnSSchh...', '...khcccccccchh...', '...khhcSmmSchhh...', '...khh.SSSS.hhh...', '...hzzRRUUOOTTh...', '...hRUzzOTTRRUhGG.', '...TUUOOzzRRUUGggG', '..SUOOTTRRzzOOGogG', '...OTTRRUUOOzzGogG', '....PPPPPPPPPPGggG', '....PPPP..PPPP.GG.', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'], COLIN_PAL),
+  const COLIN_FRONT = ['.ww...............', '.kk..hhhhhhhh.....', '..k.hhhhhhhhhh....', '..k.hhSSSSSShhh...', '...khBBBSSBBBhh...', '...khBeBBBBeBhh...', '...khcSSSnSSchh...', '...khcccccccchh...', '...khhcSmmSchhh...', '...khh.SSSS.hhh...', '...hzzRRUUOOTTh...', '...hRUzzOTTRRUhGG.', '...TUUOOzzRRUUGggG', '..SUOOTTRRzzOOGogG', '...OTTRRUUOOzzGogG', '....PPPPPPPPPPGggG', '....PPPP..PPPP.GG.', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'];
+  const COLIN_DIR = { d: makeSprite(COLIN_FRONT, COLIN_PAL),
     u: makeSprite(['.............ww...', '.....hhhhhhhhkw...', '....hhhhhhhhkh....', '....hhhhhhhhkh....', '....hhhhhhhkhh....', '....hhhhhhhkhh....', '....hhhhhhkhhh....', '....hhhhhhkhhh....', '....hhhhhkhhhh....', '....hhhhhkhhhh....', '...TThGGGhhhhRR...', '...RUGgggGhhhUO...', '...TUGgggGRRUUT...', '..SUOOGgGRUUOOTS..', '...OGgggggGOTTR...', '....GgggggGPPP....', '....PGGGGGPPPP....', '....PPPP..PPPP....', '....PPPP..PPPP....', '....KKKK..KKKK....'], COLIN_PAL),
     r: makeSprite(['ww................', '.k...hhhhhh.......', '.k..hhhhhhhh......', '..k.hhhhhSSSh.....', '..k.hhhhBBBBB.....', '..k.hhhhSBeBS.....', '..k.hhhhcSSSnS....', '...khhhhcccccS....', '...khhhhcSmmS.....', '...khhhhhSSS......', '..GGGhhTTTTTT.....', '.GgggGTRRUUOOT....', '.GgggGTUUOOTTR....', '..GgG.OTTRRUSS....', '.GgggGTRRUUOOT....', '.GgggGPPPPPPP.....', '..GGG.PPP..PPP....', '......PPP..PPP....', '......PPP..PPP....', '......KKKK.KKKK...'], COLIN_PAL) };
   COLIN_DIR.l = flipH(COLIN_DIR.r);
   const COLIN = COLIN_DIR.d;
+  // On the tower roof he plays the guitar in his hands: same front view, nothing slung on his back
+  // (neck, pegs, body and strap removed, the strap's pixels given back to the shirt).
+  const COLIN_PLAYING = makeSprite(COLIN_FRONT.map((r) => r.replace(/[wkGgo]/g, '.').replace(/z/g, 'U')), COLIN_PAL);
   // Cabbage heads ("têtes de chou"), partying at the bar.
   const CHOU_ROWS = ['.....lLLLLl.....', '...lLLlLLlLLl...', '..lLlLLLLLLlLl..', '..LLLeLLLLeLLL..', '..lLLLLLLLLLLl..',
     '..LlLLLmmLLLlL..', '...lLLLLLLLLl...', '.....lLLLLl.....', ...GUEST_ROWS.slice(8)];
