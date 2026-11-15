@@ -23,9 +23,10 @@ e2e:  ## Play the whole game in a headless browser (needs Playwright)
 
 check: smoke e2e  ## Full gate: what CI runs
 
-# Counting starts when the invitations go out; earlier hits are our own test runs.
+# Counting starts when the invitations go out (Sun 15 Nov 2026, 18:00 Rennes = 17:00 UTC);
+# earlier hits are our own test runs.
 # Override per run: make bilan BILAN_START=2026-11-16T18:00:00Z (UTC). Also read from .env.
-BILAN_START ?= $(or $(shell set -a; [ -f .env ] && . ./.env; set +a; echo $${BILAN_START}),2026-11-01)
+BILAN_START ?= $(or $(shell set -a; [ -f .env ] && . ./.env; set +a; echo $${BILAN_START}),2026-11-15T17:00:00Z)
 
 bilan:  ## Fetch GoatCounter counts since BILAN_START, write bilan.html
 	python3 scripts/bilan.py --start $(BILAN_START)
