@@ -2509,9 +2509,10 @@
     const ops = [];
     const rgb = (hex) => [1, 3, 5].map((i) => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
     const fill = (x, y, w, h, hex) => ops.push(`${rgb(hex)} rg ${x} ${y} ${w} ${h} re f`);
+    const tw = (t0, size, bold) => String(N(t0)).length * size * (bold ? 0.56 : 0.5); // rough Helvetica width
     const text = (t0, x, y, size, bold = false, hex = '#2b2340', align = 'left') => {
       const t = N(t0);
-      const w = String(t).length * size * (bold ? 0.56 : 0.5);
+      const w = tw(t0, size, bold);
       const xx = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
       ops.push(`BT ${rgb(hex)} rg /${bold ? 'F2' : 'F1'} ${size} Tf ${xx.toFixed(1)} ${y} Td (${ansi(t)}) Tj ET`);
     };
@@ -2584,7 +2585,10 @@
     const rowH = Math.min(21, (466 - 224) / rows.length), fs = rowH < 13 ? 8 : rowH < 16 ? 9 : 11;
     let y = 462;
     for (const [label, value, bold] of rows) {
-      text(label, 70, y, fs, !!bold); text(value, 525, y, fs, !!bold, '#2b2340', 'right');
+      // A long value (a guest who fished up everything) shrinks until it clears its label.
+      let vfs = fs;
+      while (vfs > 5 && tw(label, fs, !!bold) + 12 + tw(value, vfs, !!bold) > 455) vfs -= 0.5;
+      text(label, 70, y, fs, !!bold); text(value, 525, y, vfs, !!bold, '#2b2340', 'right');
       ops.push(`${rgb('#d8ccb0')} RG 0.5 w 70 ${(y - rowH * 0.3).toFixed(1)} m 525 ${(y - rowH * 0.3).toFixed(1)} l S`);
       y -= rowH;
     }
