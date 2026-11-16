@@ -2509,7 +2509,12 @@
     const ops = [];
     const rgb = (hex) => [1, 3, 5].map((i) => (parseInt(hex.slice(i, i + 2), 16) / 255).toFixed(3)).join(' ');
     const fill = (x, y, w, h, hex) => ops.push(`${rgb(hex)} rg ${x} ${y} ${w} ${h} re f`);
-    const tw = (t0, size, bold) => String(N(t0)).length * size * (bold ? 0.56 : 0.5); // rough Helvetica width
+    // Text width in PDF points, measured with a font that shares Helvetica's metrics (Arial, Liberation Sans).
+    const mctx = document.createElement('canvas').getContext('2d');
+    const tw = (t0, size, bold) => {
+      mctx.font = `${bold ? 'bold ' : ''}${size}px Helvetica, Arial, "Liberation Sans", sans-serif`;
+      return mctx.measureText(String(N(t0))).width;
+    };
     const text = (t0, x, y, size, bold = false, hex = '#2b2340', align = 'left') => {
       const t = N(t0);
       const w = tw(t0, size, bold);
