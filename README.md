@@ -71,3 +71,10 @@ blockers still stop it. No cookie, no name: only the page path (never the
 `carte/<button>`, `infos-directes`, `option/son`, and at the end of a game
 `detail/<thing>/<bucket>` for the hidden extras: caresses, tapas, metro, bench stories, finds,
 accidents, distance, no-hint / no-mistake runs). `make bilan` turns them into `bilan.html`. Nothing is sent with `?test` or in god mode.
+
+GoatCounter drops anything past 4 hits a second per visitor. The game therefore queues its
+events and sends one every 350 ms; the queue lives in `localStorage`, so a page closed early
+sends the rest on the next visit. Games finished before 17 Nov 2026 sent everything in one
+burst and lost most of their `detail/...` events: the recap says how many finished games
+each of those sections covers, and a returning guest's stored diploma resends the missing
+ones once.

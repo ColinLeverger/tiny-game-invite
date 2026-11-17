@@ -697,11 +697,64 @@
   const meet = (k) => { if (!stats.met.includes(k)) { stats.met.push(k); track(`rencontre/${k}`); } }; // what this guest ran into, in order
   // Anonymous usage counts (GoatCounter, loaded by index.html unless Do Not Track / GPC is on).
   // Only coarse game events go out: never the player's name, never the invitation fragment.
-  function track(path) {
+  // GoatCounter drops anything past 4 hits a second per visitor, and a finished game has a
+  // dozen things to say at once: hits wait in a queue and leave one at a time. The queue is
+  // kept in localStorage, so a page closed mid-queue sends the rest on the next visit, and
+  // a hit asked for before count.js has loaded is not lost either.
+  const TRACK_GAP = 350, TRACK_KEY = 'invite-track-queue';
+  const TRACK_TEST = /[?&]test\b/.test(location.search);
+  let trackQ = [], trackT = 0;
+  try { const q = JSON.parse(store.get(TRACK_KEY) || '[]'); if (Array.isArray(q)) trackQ = q.filter((x) => typeof x === 'string').slice(0, 80); } catch (e) { /* unreadable queue: start empty */ }
+  function trackSink() { // ?test never reaches GoatCounter: the e2e test plugs its own sink
+    if (TRACK_TEST) return window.__trackSink || null;
+    const gc = window.goatcounter;
+    return gc && gc.count ? (path) => gc.count({ path, title: path, event: true }) : null;
+  }
+  function trackPump() {
+    if (trackT || !trackQ.length) return;
+    trackT = setTimeout(() => { trackT = 0; trackPump(); }, TRACK_GAP);
     try {
-      if (stats.god || /[?&]test\b/.test(location.search) || !window.goatcounter || !window.goatcounter.count) return;
-      window.goatcounter.count({ path, title: path, event: true });
+      const sink = trackSink();
+      if (!sink) return; // count.js not there yet (or blocked): keep the queue, look again later
+      const path = trackQ.shift();
+      store.set(TRACK_KEY, JSON.stringify(trackQ));
+      sink(path);
     } catch (e) { /* counting must never break the game */ }
+  }
+  trackPump(); // whatever the previous visit left behind
+  function track(path) {
+    if (stats.god || (TRACK_TEST && !window.__trackSink) || trackQ.length >= 80) return;
+    trackQ.push(path); store.set(TRACK_KEY, JSON.stringify(trackQ));
+    trackPump();
+  }
+  // What a finished game says about the small hidden things, bucketed so nobody stands out.
+  // Order matters to the one-off resend below: the first entry is the caresses.
+  function detailPaths(d) {
+    const md = d.extreme ? 'extreme' : d.hard ? 'difficile' : 'normal';
+    const bk = (n, cuts) => { let lo = 0; for (const c of cuts) { if (n < c) return lo === c - 1 ? `${lo}` : `${lo}-${c - 1}`; lo = c; } return `${lo}+`; };
+    const fishN = Object.values(d.fish || {}).reduce((a, b) => a + b, 0), pz = d.puzzles || [];
+    const out = [
+      `detail/caresses/${bk(d.pets || 0, [1, 5, 20, 50])}`,
+      `detail/tapas/${bk(d.tapas || 0, [1, 2, 4, 8])}`,
+      `detail/metro/${bk(d.metro || 0, [1, 2, 5, 10])}`,
+      `detail/histoires/${d.stories || 0}-sur-${STORIES.length}`,
+      `detail/trouvailles/${bk(fishN, [1, 3, 6, 12])}`,
+      `detail/accidents/${bk(d.hits || 0, [1, 3, 6, 10])}`,
+      `detail/distance/${bk(Math.round((d.meters || 0) / 1000), [1, 2, 4, 8])}-km`,
+    ];
+    if (pz.length && pz.every((q) => !q.hints && !q.skipped)) out.push(`detail/sans-indice/${md}`);
+    if (pz.length && pz.every((q) => !q.wrong && !q.skipped)) out.push(`detail/sans-faute/${md}`);
+    if (pz.some((q) => q.skipped)) out.push(`detail/puzzle-passe/${md}`);
+    return out;
+  }
+  // Games finished before the queue existed (invitations out 15 Nov 2026 18:00 Rennes) lost
+  // most of their details to that limit: fin, duree, encadrants and caresses got through,
+  // the rest mostly did not. A returning guest's stored diploma sends the rest, once.
+  const DETAIL_SENT = 'invite-detail-sent';
+  function resendDetails(d) {
+    if (store.get(DETAIL_SENT) || !d || d.god || !(d.date >= '2026-11-15T17:00:00')) return;
+    store.set(DETAIL_SENT, '1');
+    detailPaths(d).slice(1).forEach(track);
   }
   const modeName = () => (extreme ? 'extreme' : hard ? 'difficile' : 'normal');
 
@@ -2279,20 +2332,7 @@
       track(`fin/${md}/${RANKS[finalDip.rank][0].toLowerCase()}`);
       track(`duree/${md}/${dur}-min`);
       track(`encadrants/${md}/${finalDip.sups}-sur-3`);
-      // How far guests went with the small hidden things, bucketed so nobody stands out.
-      const bk = (n, cuts) => { let lo = 0; for (const c of cuts) { if (n < c) return lo === c - 1 ? `${lo}` : `${lo}-${c - 1}`; lo = c; } return `${lo}+`; };
-      const fishN = Object.values(finalDip.fish).reduce((a, b) => a + b, 0);
-      const pz = finalDip.puzzles;
-      track(`detail/caresses/${bk(finalDip.pets, [1, 5, 20, 50])}`);
-      track(`detail/tapas/${bk(finalDip.tapas, [1, 2, 4, 8])}`);
-      track(`detail/metro/${bk(finalDip.metro, [1, 2, 5, 10])}`);
-      track(`detail/histoires/${finalDip.stories}-sur-${STORIES.length}`);
-      track(`detail/trouvailles/${bk(fishN, [1, 3, 6, 12])}`);
-      track(`detail/accidents/${bk(finalDip.hits, [1, 3, 6, 10])}`);
-      track(`detail/distance/${bk(Math.round(finalDip.meters / 1000), [1, 2, 4, 8])}-km`);
-      if (pz.length && pz.every((q) => !q.hints && !q.skipped)) track(`detail/sans-indice/${md}`);
-      if (pz.length && pz.every((q) => !q.wrong && !q.skipped)) track(`detail/sans-faute/${md}`);
-      if (finalDip.puzzles.some((q) => q.skipped)) track(`detail/puzzle-passe/${md}`);
+      detailPaths(finalDip).forEach(track); store.set(DETAIL_SENT, '1');
     } else track('infos-directes');
     store.set(SAVE_KEY, ''); SFX.win();
     $('nameBox').classList.add('hidden');
@@ -2682,6 +2722,7 @@
   });
   try {
     const last = JSON.parse(store.get('invite-diploma') || 'null');
+    resendDetails(last);
     if (last && last.code) {
       $('lastPdf').classList.remove('hidden');
       $('lastPdf').addEventListener('click', (e) => { e.preventDefault(); downloadPdf(last); });

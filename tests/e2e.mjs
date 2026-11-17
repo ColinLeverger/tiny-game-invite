@@ -21,6 +21,11 @@ async function play(browser, tag, opts, mode) {
   const p = await browser.newPage(opts);
   const errors = [];
   p.on('pageerror', (e) => errors.push(e.message));
+  // Usage counts: ?test keeps them away from GoatCounter, this sink records what would have left and when.
+  // Kept in sessionStorage: the run reloads the page on the way (resume), and the record must survive that.
+  await p.addInitScript(() => {
+    window.__trackSink = (path) => sessionStorage.setItem('tracked', JSON.stringify([...JSON.parse(sessionStorage.getItem('tracked') || '[]'), [path, Date.now()]]));
+  });
   await p.goto(`${BASE}/index.html?test#i=${b64({ b: 'Bar Test', a: '1 rue Test, Rennes', p: 'Iris', c1: 'Minou', c2: 'Matou' })}`);
   await p.check(`input[value=${mode}]`);
   await p.click('button[type=submit]');
@@ -167,6 +172,13 @@ async function play(browser, tag, opts, mode) {
   const labels = await ev(() => __invite.stats.puzzles.map((q) => q.label));
   check(new Set(labels).size === labels.length, `${tag}: a puzzle was recorded twice: ${labels.join(', ')}`);
   await p.waitForSelector('#card:not(.hidden)', { timeout: 9000 }); // after the bar scene
+  // GoatCounter drops hits past 4 a second: a finished game must send every count, spaced out.
+  await p.waitForFunction(() => (sessionStorage.getItem('tracked') || '').includes('detail/distance/') && localStorage.getItem('invite-track-queue') === '[]', null, { timeout: 15000 });
+  const sent = await ev(() => JSON.parse(sessionStorage.getItem('tracked')));
+  for (const k of ['debut/', 'fin/', 'duree/', 'encadrants/', 'detail/caresses/', 'detail/tapas/', 'detail/metro/', 'detail/histoires/', 'detail/trouvailles/', 'detail/accidents/', 'detail/distance/'])
+    check(sent.filter(([path]) => path.startsWith(k)).length === 1, `${tag}: count ${k} sent ${sent.filter(([path]) => path.startsWith(k)).length} times, expected once`);
+  const gap = Math.min(...sent.slice(1).map(([, t], i) => t - sent[i][1]));
+  check(gap >= 300, `${tag}: two counts left ${Math.round(gap)} ms apart, GoatCounter drops past 4 a second`);
   check((await p.textContent('#cBar')).includes('Bar Test'), `${tag}: bar missing from the card`);
   // The badge medal opens the score details.
   await p.click('#cBadgeBtn');

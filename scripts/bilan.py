@@ -183,7 +183,14 @@ def render(c, demo_mode):
     s.append('<section><h2>Les trois encadrant·es</h2><p class="hint">Combien chacun·e en a invité, sur les parties terminées.</p>'
              + ''.join(bar(f'{n} sur 3', sup[n], sum(sup), 'var(--accent)') for n in range(4)) + '</section>')
     det = ['<section><h2>Jusqu\'où vous êtes allé·es</h2><p class="hint">Sur les parties terminées. Tous ces petits détails étaient cachés.</p>']
-    det += [bar(txt, sum(g(f'detail/{k}/{m}') for m, _ in MODES), ends, 'var(--accent)') for k, txt in FLAGS]
+    # Games finished before 17 Nov 2026 sent their details in one burst and GoatCounter kept
+    # only the first few (4 hits a second per visitor). The flags leave last, right after the
+    # distance: the games whose distance arrived are the ones the flags can be read on.
+    known = sum(v for p, v in c.items() if p.startswith('detail/distance/'))
+    base = known if 0 < known < ends else ends
+    if base < ends:
+        det.append(f'<p class="hint">Connu pour {base} des {ends} parties terminées.</p>')
+    det += [bar(txt, sum(g(f'detail/{k}/{m}') for m, _ in MODES), base, 'var(--accent)') for k, txt in FLAGS]
     det.append('</section>')
     s.append(''.join(det))
     for k, title, unit, order in DETAILS:
@@ -192,7 +199,8 @@ def render(c, demo_mode):
             continue
         keys = order or sorted(found, key=lambda b: int(b.split('-')[0].rstrip('+')))
         tot = sum(found.values())
-        s.append(f'<section><h2>{title}</h2>' + ''.join(
+        part = f'<p class="hint">Connu pour {tot} des {ends} parties terminées.</p>' if tot < ends else ''
+        s.append(f'<section><h2>{title}</h2>{part}' + ''.join(
             bar(bucket_label(b, unit), found.get(b, 0), tot, '#7fb8d8') for b in keys) + '</section>')
     s.append('<section><h2>Et après la partie</h2>' + ''.join(bar(txt, g(f'carte/{k}'), ends) for k, txt in CARD) + '</section>')
     banner = '<div class="demo">Aperçu avec des chiffres inventés</div>' if demo_mode else ''
